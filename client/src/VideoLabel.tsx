@@ -1,4 +1,3 @@
-// VideoPlayer.tsx
 import React, { useState, useEffect, useRef } from 'react';
 import ReactPlayer from 'react-player';
 import axios from 'axios';
@@ -15,32 +14,38 @@ interface Box {
 }
 
 const VideoPlayer: React.FC = () => {
-  const [videoUrl, setVideoUrl] = useState<string>('');
+  const [videoUrl, setVideoUrl] = useState<string>('');  // Base video URL
   const [boxes, setBoxes] = useState<Box[]>([]);
-  const [currentTime, setCurrentTime] = useState<number>(0);
+  const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time
+  const [chunkUrl, setChunkUrl] = useState<string>('');     // Video chunk URL
   const videoRef = useRef<any>(null);
 
   useEffect(() => {
-    // Fetch video URL and initial label data from server
+    // Fetch video URL and initial label data from the backend
     axios.get('/api/video-url').then(response => {
-      setVideoUrl(response.data.url);
+      setVideoUrl(response.data.url);  // For initial video URL
     });
     axios.get('/api/labels').then(response => {
-      setBoxes(response.data);
+      setBoxes(response.data);  // Get labeled boxes data
     });
   }, []);
 
   const handleTimeChange = (time: number) => {
     setCurrentTime(time);
+    fetchVideoChunk(time, time + 5);  // Request a chunk for the next 5 seconds
   };
 
-  const handleLabelChange = (id: string, newBox: Box) => {
-    setBoxes(prevBoxes => prevBoxes.map(box => (box.id === id ? newBox : box)));
-    axios.post('/api/update-label', newBox);
+  const fetchVideoChunk = (startTime: number, endTime: number) => {
+    // Construct the URL for the video chunk request
+    const chunkUrl = `/api/video-chunk?start=${startTime}&end=${endTime}`;
+    setChunkUrl(chunkUrl);  // Store the chunk URL
+
+    // You could also handle loading of the chunk into the player (optional)
   };
 
   const handleVideoSeek = (time: number) => {
     setCurrentTime(time);
+    fetchVideoChunk(time, time + 5);  // Request a chunk based on the seek time
   };
 
   const addBox = () => {
@@ -55,18 +60,21 @@ const VideoPlayer: React.FC = () => {
       height: 100,
     };
     setBoxes([...boxes, newBox]);
-    axios.post('/api/add-label', newBox);
+    axios.post('/api/add-label', newBox);  // Save new label on the server
   };
 
   return (
     <div>
+      {/* Video Player */}
       <ReactPlayer
         ref={videoRef}
-        url={videoUrl}
+        url={chunkUrl || videoUrl}  // Use chunkUrl if available, else fallback to base video URL
         controls
-        onProgress={({ playedSeconds }) => handleTimeChange(playedSeconds)}
-        onSeek={handleVideoSeek}
+        onProgress={({ playedSeconds }) => handleTimeChange(playedSeconds)}  // Handle scrubbing
+        onSeek={handleVideoSeek}  // Handle manual seeking
       />
+
+      {/* Label Boxes */}
       <div>
         {boxes.map((box) => (
           <div
@@ -86,6 +94,7 @@ const VideoPlayer: React.FC = () => {
           </div>
         ))}
       </div>
+
       <button onClick={addBox}>Add Box</button>
     </div>
   );
