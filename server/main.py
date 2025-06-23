@@ -23,23 +23,23 @@ def load_labels():
 
 
 def get_video_chunk(start_time, end_time):
+    # Use fragmented MP4 for streaming. The 'faststart' flag is not suitable for
+    # non-seekable outputs like pipes, as it requires seeking. Fragmented MP4
+    # creates self-contained chunks that can be played as they arrive.
     cmd = [
         "ffmpeg",
-        "-ss",
-        str(start_time),
-        "-to",
-        str(end_time),
-        "-i",
-        VIDEO_PATH,
-        "-f",
-        "mp4",
-        "-c:v",
-        "libx264",
-        "-c:a",
-        "aac",
-        "pipe:1",  # Output to stdout (streaming)
+        "-ss", str(start_time),  # Input seeking, fast
+        "-i", VIDEO_PATH,
+        "-to", str(end_time),    # Output option, should be after -i
+        # Use movflags for fragmented MP4 output, suitable for streaming
+        "-movflags", "frag_keyframe+empty_moov",
+        "-f", "mp4",
+        "-c:v", "libx264",
+        "-c:a", "aac",
+        "pipe:1",  # Output to stdout
     ]
-    return subprocess.Popen(cmd, stdout=subprocess.PIPE)
+    # Capture stderr to log potential ffmpeg errors
+    return subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
 # Simple function to save labels to a JSON file
@@ -88,14 +88,30 @@ def stream_video_chunk():
         end_time = float(request.args.get("end", 10))  # Get end time from query params
 
         # Get the video chunk from ffmpeg
-        video_chunk = get_video_chunk(start_time, end_time)
+        video_process = get_video_chunk(start_time, end_time)
+
+        def generate_chunks():
+            try:
+                # Read in chunks to avoid loading the whole chunk into memory
+                for chunk in iter(lambda: video_process.stdout.read(4096), b""):
+                    yield chunk
+            finally:
+                # Ensure the process is cleaned up
+                video_process.stdout.close()
+                video_process.wait()
+                if video_process.returncode != 0:
+                    # Log ffmpeg errors
+                    app.logger.error(f"ffmpeg error: {video_process.stderr.read().decode('utf-8')}")
 
         # Return the video chunk as a streaming response
         return flask.Response(
-            video_chunk, content_type="video/mp4", status=206
-        )  # HTTP status 206 for partial content
+            generate_chunks(),
+            content_type="video/mp4",
+            status=200,  # Use 200 OK since we are serving the whole chunk
+        )
 
     except Exception as e:
+        app.logger.error(f"Error in stream_video_chunk: {e}")
         return jsonify({"error": str(e)}), 500
 
 

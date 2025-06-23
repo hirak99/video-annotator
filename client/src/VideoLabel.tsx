@@ -13,31 +13,37 @@ interface Box {
     height: number;
 }
 
+// Backend URL.
+const backendUrl = 'http://localhost:5050';
+
+// Function to get from backend.
+const getBackendPromise = async (endpoint: string) => {
+    return await axios.get(`${backendUrl}${endpoint}`);
+};
+
+
 const VideoPlayer: React.FC = () => {
-    const [videoUrl, setVideoUrl] = useState<string>('');  // Base video URL
     const [boxes, setBoxes] = useState<Box[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time
     const [chunkUrl, setChunkUrl] = useState<string>('');     // Video chunk URL
     const videoRef = useRef<any>(null);
 
     useEffect(() => {
-        // Fetch video URL and initial label data from the backend
-        axios.get('http://127.0.0.1:5050/api/video-url').then(response => {
-            setVideoUrl(response.data.url);  // For initial video URL
-        });
-        axios.get('http://localhost:5050/api/labels').then(response => {
+        // Initialize.
+        handleVideoSeek(0.0);
+        getBackendPromise('/api/labels').then(response => {
             setBoxes(response.data);  // Get labeled boxes data
         });
-    }, []);
+    });
 
     const handleTimeChange = (time: number) => {
         setCurrentTime(time);
-        fetchVideoChunk(time, time + 5);  // Request a chunk for the next 5 seconds
+        // TODO: Advance chunk when needed.
     };
 
     const fetchVideoChunk = (startTime: number, endTime: number) => {
         // Construct the URL for the video chunk request
-        const chunkUrl = `/api/video-chunk?start=${startTime}&end=${endTime}`;
+        const chunkUrl = `${backendUrl}/api/video-chunk?start=${startTime}&end=${endTime}`;
         setChunkUrl(chunkUrl);  // Store the chunk URL
 
         // You could also handle loading of the chunk into the player (optional)
@@ -68,7 +74,7 @@ const VideoPlayer: React.FC = () => {
             {/* Video Player */}
             <ReactPlayer
                 ref={videoRef}
-                url={chunkUrl || videoUrl}  // Use chunkUrl if available, else fallback to base video URL
+                url={chunkUrl}
                 controls
                 onProgress={({ playedSeconds }) => handleTimeChange(playedSeconds)}  // Handle scrubbing
                 onSeek={handleVideoSeek}  // Handle manual seeking
