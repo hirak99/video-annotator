@@ -22,10 +22,10 @@ const VideoPlayer: React.FC = () => {
 
   useEffect(() => {
     // Fetch video URL and initial label data from the backend
-    axios.get('/api/video-url').then(response => {
+    axios.get('http://127.0.0.1:5050/api/video-url').then(response => {
       setVideoUrl(response.data.url);  // For initial video URL
     });
-    axios.get('/api/labels').then(response => {
+    axios.get('http://localhost:5050/api/labels').then(response => {
       setBoxes(response.data);  // Get labeled boxes data
     });
   }, []);

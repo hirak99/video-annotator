@@ -23,3 +23,7 @@ mv client/.git .
 git add .
 ```
 
+# Ports
+
+5050: Internal backend server
+5060: Node server for the client

@@ -10,7 +10,7 @@ import flask_cors
 app = flask.Flask(__name__)
 flask_cors.CORS(app)  # Enable CORS for frontend to communicate with the backend
 
-VIDEO_PATH = "path_to_your_video.mp4"
+VIDEO_PATH = "video.mkv"
 LABELS_FILE = "labels.json"
 
 
@@ -100,4 +100,4 @@ def stream_video_chunk():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host="0.0.0.0", port=5050)
