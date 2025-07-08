@@ -6,6 +6,7 @@ import subprocess
 import flask
 from flask import jsonify
 from flask import request
+from flask import send_file  # Import send_file
 import flask_cors
 
 app = flask.Flask(__name__)
@@ -26,13 +27,18 @@ def load_labels():
 def get_video_duration():
     cmd = [
         "ffprobe",
-        "-v", "error",
-        "-show_entries", "format=duration",
-        "-of", "default=noprint_wrappers=1:nokey=1",
+        "-v",
+        "error",
+        "-show_entries",
+        "format=duration",
+        "-of",
+        "default=noprint_wrappers=1:nokey=1",
         VIDEO_PATH,
     ]
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
+        result = subprocess.run(
+            cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True
+        )
         return float(result.stdout)
     except (subprocess.CalledProcessError, FileNotFoundError, ValueError) as e:
         app.logger.error(f"Error getting video duration with ffprobe: {e}")
@@ -45,14 +51,21 @@ def get_video_chunk(start_time, end_time):
     # creates self-contained chunks that can be played as they arrive.
     cmd = [
         "ffmpeg",
-        "-ss", str(start_time),  # Input seeking, fast
-        "-i", VIDEO_PATH,
-        "-to", str(end_time),    # Output option, should be after -i
+        "-ss",
+        str(start_time),  # Input seeking, fast
+        "-i",
+        VIDEO_PATH,
+        "-to",
+        str(end_time),  # Output option, should be after -i
         # Use movflags for fragmented MP4 output, suitable for streaming
-        "-movflags", "frag_keyframe+empty_moov",
-        "-f", "mp4",
-        "-c:v", "libx264",
-        "-c:a", "aac",
+        "-movflags",
+        "frag_keyframe+empty_moov",
+        "-f",
+        "mp4",
+        "-c:v",
+        "libx264",
+        "-c:a",
+        "aac",
         "pipe:1",  # Output to stdout
     ]
     # Capture stderr to log potential ffmpeg errors
@@ -100,40 +113,52 @@ def update_label():
     return jsonify({"status": "success", "label": updated_label})
 
 
-@app.route("/api/video-chunk", methods=["GET"])
-def stream_video_chunk():
-    try:
-        start_time = float(
-            request.args.get("start", 0)
-        )  # Get start time from query params
-        end_time = float(request.args.get("end", 10))  # Get end time from query params
+# @app.route("/api/video", methods=["GET"])
+# def serve_whole_video():
+#     try:
+#         response = send_file(VIDEO_PATH, mimetype='video/mp4')
+#         return response
+#     except FileNotFoundError:
+#         return jsonify({"error": "Video file not found"}), 404
+#     except Exception as e:
+#         app.logger.error(f"Error serving video file: {e}")
+#         return jsonify({"error": str(e)}), 500
 
-        # Get the video chunk from ffmpeg
-        video_process = get_video_chunk(start_time, end_time)
 
-        def generate_chunks():
-            try:
-                # Read in chunks to avoid loading the whole chunk into memory
-                for chunk in iter(lambda: video_process.stdout.read(4096), b""):
-                    yield chunk
-            finally:
-                # Ensure the process is cleaned up
-                video_process.stdout.close()
-                video_process.wait()
-                if video_process.returncode != 0:
-                    # Log ffmpeg errors
-                    app.logger.error(f"ffmpeg error: {video_process.stderr.read().decode('utf-8')}")
+@app.route("/api/video", methods=["GET"])
+def stream_video():
+    file_size = os.path.getsize(VIDEO_PATH)
 
-        # Return the video chunk as a streaming response
-        return flask.Response(
-            generate_chunks(),
-            content_type="video/mp4",
-            status=200,  # Use 200 OK since we are serving the whole chunk
+    # Get the range from the request headers (e.g., "bytes=0-1023")
+    range_header = request.headers.get("Range", None)
+
+    if range_header:
+        # Parse the Range header
+        byte1, byte2 = range_header.strip().replace("bytes=", "").split("-")
+        byte1 = int(byte1)
+        byte2 = byte2 and int(byte2) or file_size - 1
+
+        # Set the content range and content length headers for partial content
+        content_range = f"bytes {byte1}-{byte2}/{file_size}"
+        content_length = byte2 - byte1 + 1
+
+        # Open the file and read the requested range
+        with open(VIDEO_PATH, "rb") as video_file:
+            video_file.seek(byte1)
+            data = video_file.read(content_length)
+
+        # Return the chunked video data as a 206 Partial Content response
+        response = flask.Response(
+            data, status=206, mimetype="video/mp4", content_type="video/mp4"
         )
+        response.headers["Content-Range"] = content_range
+        return response
 
-    except Exception as e:
-        app.logger.error(f"Error in stream_video_chunk: {e}")
-        return jsonify({"error": str(e)}), 500
+    # If no range is provided, send the whole video
+    with open(VIDEO_PATH, "rb") as video_file:
+        data = video_file.read()
+
+    return flask.Response(data, mimetype="video/mp4")
 
 
 if __name__ == "__main__":
