@@ -23,16 +23,9 @@ const getBackendPromise = async (endpoint: string) => {
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time (absolute)
-    const [duration, setDuration] = useState<number>(0); // Total video duration
     const playerRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
-        // On component mount, fetch video metadata and initial labels
-        getBackendPromise('/api/video-info').then(response => {
-            if (response.data.duration) {
-                setDuration(response.data.duration);
-            }
-        });
         getBackendPromise('/api/labels').then(response => {
             setBoxes(response.data);  // Get labeled boxes data
         });
@@ -58,39 +51,42 @@ const VideoPlayer: React.FC = () => {
     };
 
     return (
-        <div>
-            {/* Video Player */}
-            <video
-                ref={playerRef}
-                src={`${BACKEND_URL}/api/video`} // Use the new endpoint
-                controls
-                autoPlay
-                onTimeUpdate={handleTimeUpdate}
-                style={{ width: '100%', backgroundColor: 'black' }}
-            />
+        <div> {/* Main container */}
+            <div style={{ position: 'relative', width: '100%' }}> {/* New wrapper */}
+                {/* Video Player */}
+                <video
+                    ref={playerRef}
+                    src={`${BACKEND_URL}/api/video`} // Use the new endpoint
+                    controls
+                    autoPlay
+                    onTimeUpdate={handleTimeUpdate}
+                    style={{ width: '100%', backgroundColor: 'black' }}
+                />
 
-            {/* Label Boxes */}
-            <div>
-                {boxes
-                    .filter(box => currentTime >= box.start && currentTime <= box.end)
-                    .map((box) => (
-                        <div
-                            key={box.id}
-                            style={{
-                                position: 'absolute',
-                                top: box.y,
-                                left: box.x,
-                                width: box.width,
-                                height: box.height,
-                                border: '2px solid red',
-                                background: 'rgba(255, 0, 0, 0.3)',
-                            }}
-                            onClick={() => console.log('Editing box:', box.id)}  // Placeholder for box edit
-                        >
-                            {box.name}
-                        </div>
-                    ))}
-            </div>
+                {/* Label Boxes */}
+                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}> {/* Box container */}
+                    {boxes
+                        .filter(box => currentTime >= box.start && currentTime <= box.end)
+                        .map((box) => (
+                            <div
+                                key={box.id}
+                                style={{
+                                    position: 'absolute', // Positions relative to the box container
+                                    top: box.y,
+                                    left: box.x,
+                                    width: box.width,
+                                    height: box.height,
+                                    border: '2px solid red',
+                                    background: 'rgba(255, 0, 0, 0.3)',
+                                    pointerEvents: 'auto', // Allow pointer events on the individual boxes
+                                }}
+                                onClick={() => console.log('Editing box:', box.id)}  // Placeholder for box edit
+                            >
+                                {box.name}
+                            </div>
+                        ))}
+                </div>
+            </div> {/* End of new wrapper */}
 
             <button onClick={addBox}>Add Box</button>
         </div>
