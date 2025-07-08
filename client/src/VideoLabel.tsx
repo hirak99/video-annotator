@@ -35,6 +35,25 @@ const VideoPlayer: React.FC = () => {
         setCurrentTime(event.currentTarget.currentTime);
     };
 
+    // Simple string hashing function to generate a number
+    const stringToHash = (str: string): number => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash);
+    };
+
+    // Convert hash to HSL color string
+    const hashToHSLColor = (hash: number): string => {
+        const hue = hash % 360; // Hue is between 0 and 359
+        const saturation = 70; // Keep saturation constant for vibrant colors
+        const lightness = 50; // Keep lightness constant
+        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+    };
+
     const addBox = () => {
         const newBox = {
             id: Date.now().toString(),
@@ -51,8 +70,8 @@ const VideoPlayer: React.FC = () => {
     };
 
     return (
-        <div> {/* Main container */}
-            <div style={{ position: 'relative', width: '100%' }}> {/* New wrapper */}
+        <div style={{ display: 'flex' }}> {/* Main container with flex display */}
+            <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
                 {/* Video Player */}
                 <video
                     ref={playerRef}
@@ -76,8 +95,8 @@ const VideoPlayer: React.FC = () => {
                                     left: box.x,
                                     width: box.width,
                                     height: box.height,
-                                    border: '2px solid red',
-                                    background: 'rgba(255, 0, 0, 0.3)',
+                                    border: `2px solid ${hashToHSLColor(stringToHash(box.name))}`,
+                                    background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
                                     pointerEvents: 'auto', // Allow pointer events on the individual boxes
                                 }}
                                 onClick={() => console.log('Editing box:', box.id)}  // Placeholder for box edit
@@ -86,7 +105,19 @@ const VideoPlayer: React.FC = () => {
                             </div>
                         ))}
                 </div>
-            </div> {/* End of new wrapper */}
+            </div> {/* End of video/box wrapper */}
+
+            {/* Sidebar */}
+            <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
+                <h3>Added Boxes</h3>
+                <ul>
+                    {boxes.map(box => (
+                        <li key={box.id}>
+                            <strong>{box.name}</strong> (Time: {box.start.toFixed(2)}s - {box.end.toFixed(2)}s)
+                        </li>
+                    ))}
+                </ul>
+            </div> {/* End of sidebar */}
 
             <button onClick={addBox}>Add Box</button>
         </div>
