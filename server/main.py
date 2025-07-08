@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import subprocess
 
@@ -20,6 +21,22 @@ def load_labels():
         with open(LABELS_FILE, "r") as f:
             return json.load(f)
     return []
+
+
+def get_video_duration():
+    cmd = [
+        "ffprobe",
+        "-v", "error",
+        "-show_entries", "format=duration",
+        "-of", "default=noprint_wrappers=1:nokey=1",
+        VIDEO_PATH,
+    ]
+    try:
+        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True, text=True)
+        return float(result.stdout)
+    except (subprocess.CalledProcessError, FileNotFoundError, ValueError) as e:
+        app.logger.error(f"Error getting video duration with ffprobe: {e}")
+        return None
 
 
 def get_video_chunk(start_time, end_time):
@@ -48,9 +65,13 @@ def save_labels(labels):
         json.dump(labels, f)
 
 
-@app.route("/api/video-url", methods=["GET"])
-def get_video_url():
-    return jsonify({"url": VIDEO_PATH})
+@app.route("/api/video-info", methods=["GET"])
+def get_video_info():
+    duration = get_video_duration()
+    logging.info(f"Video duration: {duration}")
+    if duration is not None:
+        return jsonify({"duration": duration})
+    return jsonify({"error": "Could not retrieve video information"}), 500
 
 
 @app.route("/api/labels", methods=["GET"])

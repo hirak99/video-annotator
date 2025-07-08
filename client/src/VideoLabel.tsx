@@ -14,44 +14,63 @@ interface Box {
 }
 
 // Backend URL.
-const backendUrl = 'http://localhost:5050';
+const BACKEND_URL = 'http://localhost:5050'; // Should be in an env file for production
+const CHUNK_DURATION = 10; // How many seconds of video to fetch at a time.
 
 // Function to get from backend.
 const getBackendPromise = async (endpoint: string) => {
-    return await axios.get(`${backendUrl}${endpoint}`);
+    return axios.get(`${BACKEND_URL}${endpoint}`);
 };
-
 
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
-    const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time
+    const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time (absolute)
+    const [duration, setDuration] = useState<number>(0); // Total video duration
     const [chunkUrl, setChunkUrl] = useState<string>('');     // Video chunk URL
-    const videoRef = useRef<any>(null);
+    const [chunkStartTime, setChunkStartTime] = useState<number>(0); // Start time of the current chunk
+    const playerRef = useRef<ReactPlayer>(null);
 
     useEffect(() => {
-        // Initialize.
-        handleVideoSeek(0.0);
+        // On component mount, fetch video metadata and initial labels
+        getBackendPromise('/api/video-info').then(response => {
+            if (response.data.duration) {
+                setDuration(response.data.duration);
+            }
+        });
         getBackendPromise('/api/labels').then(response => {
             setBoxes(response.data);  // Get labeled boxes data
         });
-    });
 
-    const handleTimeChange = (time: number) => {
-        setCurrentTime(time);
-        // TODO: Advance chunk when needed.
-    };
+        // Load the first chunk of the video
+        fetchVideoChunk(0, CHUNK_DURATION);
+    }, []); // Empty dependency array ensures this runs only once.
 
     const fetchVideoChunk = (startTime: number, endTime: number) => {
-        // Construct the URL for the video chunk request
-        const chunkUrl = `${backendUrl}/api/video-chunk?start=${startTime}&end=${endTime}`;
-        setChunkUrl(chunkUrl);  // Store the chunk URL
+        // Ensure we don't request beyond the video duration
+        const realEndTime = duration > 0 ? Math.min(endTime, duration) : endTime;
+        const newChunkUrl = `${BACKEND_URL}/api/video-chunk?start=${startTime}&end=${realEndTime}`;
 
-        // You could also handle loading of the chunk into the player (optional)
+        // Avoid reloading the same chunk
+        if (newChunkUrl === chunkUrl) return;
+
+        setChunkUrl(newChunkUrl);
+        setChunkStartTime(startTime);
+    };
+
+    const handleProgress = ({ playedSeconds }: { playedSeconds: number }) => {
+        const absoluteTime = chunkStartTime + playedSeconds;
+        setCurrentTime(absoluteTime);
+
+        // Pre-fetch the next chunk when we are near the end of the current one for smooth playback
+        if (duration > 0 && playedSeconds > CHUNK_DURATION - 2 && absoluteTime < duration) {
+            fetchVideoChunk(absoluteTime, absoluteTime + CHUNK_DURATION);
+        }
     };
 
     const handleVideoSeek = (time: number) => {
+        // time is the absolute time in seconds from the seek bar
         setCurrentTime(time);
-        fetchVideoChunk(time, time + 5);  // Request a chunk based on the seek time
+        fetchVideoChunk(time, time + CHUNK_DURATION);  // Request a chunk based on the seek time
     };
 
     const addBox = () => {
@@ -59,30 +78,34 @@ const VideoPlayer: React.FC = () => {
             id: Date.now().toString(),
             name: 'New Box',
             start: currentTime,
-            end: currentTime + 5,
+            end: currentTime + CHUNK_DURATION,
             x: 50,
             y: 50,
             width: 100,
             height: 100,
         };
         setBoxes([...boxes, newBox]);
-        axios.post('/api/add-label', newBox);  // Save new label on the server
+        axios.post(`${BACKEND_URL}/api/add-label`, newBox);  // Save new label on the server
     };
 
     return (
         <div>
             {/* Video Player */}
             <ReactPlayer
-                ref={videoRef}
+                ref={playerRef}
                 url={chunkUrl}
                 controls
-                onProgress={({ playedSeconds }) => handleTimeChange(playedSeconds)}  // Handle scrubbing
+                playing
+                duration={duration}
+                onProgress={handleProgress}
                 onSeek={handleVideoSeek}  // Handle manual seeking
             />
 
             {/* Label Boxes */}
             <div>
-                {boxes.map((box) => (
+                {boxes
+                    .filter(box => currentTime >= box.start && currentTime <= box.end)
+                    .map((box) => (
                     <div
                         key={box.id}
                         style={{
