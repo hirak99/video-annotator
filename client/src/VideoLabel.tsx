@@ -92,7 +92,7 @@ const VideoPlayer: React.FC = () => {
     const addBox = () => {
         const newBox = {
             id: Date.now().toString(),
-            name: 'New Box',
+            name: '(Unnamed)',
             start: currentTime,
             end: currentTime + 10, // Assuming a default duration for a new box
             x: 50,
@@ -170,9 +170,9 @@ const VideoPlayer: React.FC = () => {
                                             const newHeight = initialHeight + deltaY * scaleFactor;
 
                                             if (isBottomRight) {
-                                                box = { ...box!,  width: newWidth, height: newHeight };
+                                                box = { ...box!, width: newWidth, height: newHeight };
                                             } else {
-                                                box = { ...box!, x: newX, y: newY};
+                                                box = { ...box!, x: newX, y: newY };
                                             }
                                             setBoxes(boxes.map(b => b.id === boxId ? box! : b));
                                         };
@@ -208,13 +208,14 @@ const VideoPlayer: React.FC = () => {
 
             {/* Sidebar */}
             <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
-                <h3>Added ROIs</h3>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}> {/* Flex grid for items */}
+                <div style={{ paddingBottom: '10px', borderBottom: '1px solid #eee', marginBottom: '10px' }}>
+                    <span>ROIs</span> <button onClick={addBox} style={{ marginTop: '10px' }}>Add</button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}> {/* Flex grid for items */}
                     {boxes.sort((a, b) => a.start - b.start).map(box => (
                         <SidebarItem key={box.id} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
                     ))}
                 </div>
-                <button onClick={addBox} style={{ marginTop: '10px' }}>Add Box</button>
             </div> {/* End of sidebar */}
 
         </div>
