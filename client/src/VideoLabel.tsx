@@ -125,6 +125,7 @@ const VideoPlayer: React.FC = () => {
                         .map((box) => (
                             <div
                                 key={box.id}
+                                data-box-id={box.id}
                                 style={{
                                     position: 'absolute', // Positions relative to the box container
                                     top: `${(box.y / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
@@ -135,7 +136,36 @@ const VideoPlayer: React.FC = () => {
                                     background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
                                     pointerEvents: 'auto', // Allow pointer events on the individual boxes
                                 }}
-                                onClick={() => console.log('Editing box:', box.id)}  // Placeholder for box edit
+                                onMouseDown={(event) => {
+                                    event.stopPropagation();
+                                    const boxRef = event.currentTarget;
+                                    const boxId = boxRef.getAttribute('data-box-id');
+                                    const box = boxes.find(b => b.id === boxId);
+                                    if (box) {
+                                        const startX = event.clientX;
+                                        const startY = event.clientY;
+                                        const initialX = box.x;
+                                        const initialY = box.y;
+
+                                        const scaleFactor = videoDimensions.naturalWidth / videoDimensions.displayWidth;
+
+                                        const handleMouseMove = (event: MouseEvent) => {
+                                            const deltaX = event.clientX - startX;
+                                            const deltaY = event.clientY - startY;
+                                            const newX = initialX + deltaX * scaleFactor;
+                                            const newY = initialY + deltaY * scaleFactor;
+                                            setBoxes(boxes.map(b => b.id === boxId ? { ...b, x: newX, y: newY } : b));
+                                        };
+
+                                        const handleMouseUp = () => {
+                                            document.removeEventListener('mousemove', handleMouseMove);
+                                            document.removeEventListener('mouseup', handleMouseUp);
+                                        };
+
+                                        document.addEventListener('mousemove', handleMouseMove);
+                                        document.addEventListener('mouseup', handleMouseUp);
+                                    }
+                                }}
                             >
                                 {box.name}
                             </div>
