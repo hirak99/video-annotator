@@ -76,57 +76,69 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, currentTime
 
 
     return (
-        <li>
-            {isEditingName ? (
-                <input
-                    type="text"
-                    value={boxName}
-                    onChange={handleNameChange}
-                    onBlur={handleNameBlur}
-                    autoFocus
-                    style={{ width: '100px', margin: '0 5px', padding: '2px', border: '1px solid #ccc' }}
-                />
-            ) : (
-                <strong onClick={handleNameClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px', marginRight: '5px' }}>
-                    {box.name}
-                </strong>
-            )}
-             (Time:
-            {isEditingStart ? (
-                <input
-                    type="number"
-                    step="0.01"
-                    value={startTime}
-                    onChange={handleStartTimeChange}
-                    onBlur={handleStartBlur}
-                    autoFocus
-                    style={{ width: '60px', margin: '0 5px', padding: '2px', border: '1px solid #ccc' }}
-                />
-            ) : (
-                <span onClick={handleStartClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px', margin: '0 5px' }}>
-                    {box.start.toFixed(2)}s
-                </span>
-            )}
-             -
-            {isEditingEnd ? (
-                <input
-                    type="number"
-                    step="0.01"
-                    value={endTime}
-                    onChange={handleEndTimeChange}
-                    onBlur={handleEndBlur}
-                    autoFocus
-                    style={{ width: '60px', margin: '0 5px', padding: '2px', border: '1px solid #ccc' }}
-                />
-            ) : (
-                <span onClick={handleEndClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px', margin: '0 5px' }}>
-                    {box.end.toFixed(2)}s
-                </span>
-            )}
-            )
-            <button onClick={handleSetStart} style={{ marginLeft: '10px', padding: '2px 5px' }}>Start Here</button>
-            <button onClick={handleSetEnd} style={{ marginLeft: '5px', padding: '2px 5px' }}>End Here</button>
-        </li>
+        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: '120px 80px 80px 1fr', gap: '10px', alignItems: 'center' }}>
+            {/* Box Name */}
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {isEditingName ? (
+                    <input
+                        type="text"
+                        value={boxName}
+                        onChange={handleNameChange}
+                        onBlur={handleNameBlur}
+                        autoFocus
+                        style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
+                    />
+                ) : (
+                    <strong onClick={handleNameClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' }}>
+                        {box.name}
+                    </strong>
+                )}
+            </div>
+
+            {/* Start Time */}
+            <div>
+                {isEditingStart ? (
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={startTime}
+                        onChange={handleStartTimeChange}
+                        onBlur={handleStartBlur}
+                        autoFocus
+                        style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
+                    />
+                ) : (
+                    <span onClick={handleStartClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' }}>
+                        {box.start.toFixed(2)}s
+                    </span>
+                )}
+            </div>
+
+            {/* End Time */}
+            <div>
+                {isEditingEnd ? (
+                    <input
+                        type="number"
+                        step="0.01"
+                        value={endTime}
+                        onChange={handleEndTimeChange}
+                        onBlur={handleEndBlur}
+                        autoFocus
+                        style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
+                    />
+                ) : (
+                    <span onClick={handleEndClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' }}>
+                        {box.end.toFixed(2)}s
+                    </span>
+                )}
+            </div>
+
+                {/* Buttons */}
+                <div style={{ display: 'flex', gap: '5px' }}>
+                    <button onClick={handleSetStart} style={{ padding: '2px 5px' }} aria-label="Set Start Time">◁</button> {/* Using a play icon */}
+                    <button onClick={handleSetEnd} style={{ padding: '2px 5px' }} aria-label="Set End Time">▷</button> {/* Using a stop icon */}
+                </div>
+            </div>
     );
 };
 
