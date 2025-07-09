@@ -7,10 +7,16 @@ interface SidebarItemProps {
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox }) => {
+    const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStart, setIsEditingStart] = useState(false);
     const [isEditingEnd, setIsEditingEnd] = useState(false);
+    const [boxName, setBoxName] = useState(box.name);
     const [startTime, setStartTime] = useState(box.start.toFixed(2));
     const [endTime, setEndTime] = useState(box.end.toFixed(2));
+
+    const handleNameClick = () => {
+        setIsEditingName(true);
+    };
 
     const handleStartClick = () => {
         setIsEditingStart(true);
@@ -20,12 +26,21 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox }) => {
         setIsEditingEnd(true);
     };
 
+    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setBoxName(e.target.value);
+    };
+
     const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setStartTime(e.target.value);
     };
 
     const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEndTime(e.target.value);
+    };
+
+    const handleNameBlur = () => {
+        onUpdateBox({ ...box, name: boxName });
+        setIsEditingName(false);
     };
 
     const handleStartBlur = () => {
@@ -50,7 +65,21 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox }) => {
 
     return (
         <li>
-            <strong>{box.name}</strong> (Time:
+            {isEditingName ? (
+                <input
+                    type="text"
+                    value={boxName}
+                    onChange={handleNameChange}
+                    onBlur={handleNameBlur}
+                    autoFocus
+                    style={{ width: '100px', margin: '0 5px', padding: '2px', border: '1px solid #ccc' }}
+                />
+            ) : (
+                <strong onClick={handleNameClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px', marginRight: '5px' }}>
+                    {box.name}
+                </strong>
+            )}
+             (Time:
             {isEditingStart ? (
                 <input
                     type="number"
