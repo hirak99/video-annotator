@@ -104,6 +104,13 @@ const VideoPlayer: React.FC = () => {
         axios.post(`${BACKEND_URL}/api/add-label`, newBox);  // Save new label on the server
     };
 
+    const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
+        const target = event.target as HTMLElement;
+        const rect = target.getBoundingClientRect();
+        return event.clientX >= rect.right - 10 && event.clientY >= rect.bottom - 10;
+    };
+
+
     return (
         <div style={{ display: 'flex' }}> {/* Main container with flex display */}
             <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
@@ -123,6 +130,7 @@ const VideoPlayer: React.FC = () => {
                     {boxes
                         .filter(box => currentTime >= box.start && currentTime <= box.end)
                         .map((box) => (
+
                             <div
                                 key={box.id}
                                 data-box-id={box.id}
@@ -151,8 +159,7 @@ const VideoPlayer: React.FC = () => {
 
                                         const scaleFactor = videoDimensions.naturalWidth / videoDimensions.displayWidth;
 
-                                        // Check if the user clicked the bottom right of the box
-                                        const isBottomRight = event.clientX >= boxRef.offsetLeft + boxRef.offsetWidth - 5 && event.clientY >= boxRef.offsetTop + boxRef.offsetHeight - 5;
+                                        const isBottomRight = isEventAtBottomRight(event);
 
                                         const handleMouseMove = (event: MouseEvent) => {
                                             const deltaX = event.clientX - startX;
@@ -176,6 +183,18 @@ const VideoPlayer: React.FC = () => {
 
                                         document.addEventListener('mousemove', handleMouseMove);
                                         document.addEventListener('mouseup', handleMouseUp);
+                                    }
+                                }}
+                                onMouseMove={(event) => {
+                                    const boxRef = event.currentTarget;
+                                    const boxId = boxRef.getAttribute('data-box-id');
+                                    const box = boxes.find(b => b.id === boxId);
+                                    if (box) {
+                                        if (isEventAtBottomRight(event)) {
+                                            boxRef.style.cursor = 'se-resize';
+                                        } else {
+                                            boxRef.style.cursor = 'move';
+                                        }
                                     }
                                 }}
                             >
