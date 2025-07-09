@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import ResizeObserver from 'resize-observer-polyfill';
 import axios from 'axios';
 import SidebarItem from './SidebarItem';
 import { Box } from './types';
@@ -42,15 +43,22 @@ const VideoPlayer: React.FC = () => {
         });
     };
 
-    const handleResize = () => {
-        if (playerRef.current) {
-            setVideoDimensions(prev => ({
-                ...prev,
-                displayWidth: playerRef.current!.clientWidth,
-                displayHeight: playerRef.current!.clientHeight
-            }));
-        }
-    };
+    useEffect(() => {
+        if (!playerRef.current) return;
+
+        const observer = new ResizeObserver(() => {
+            if (playerRef.current) {
+                setVideoDimensions(prev => ({
+                    ...prev,
+                    displayWidth: playerRef.current!.clientWidth,
+                    displayHeight: playerRef.current!.clientHeight
+                }));
+            }
+        });
+
+        observer.observe(playerRef.current);
+        return () => observer.disconnect();
+    }, []);
 
     // Simple string hashing function to generate a number
     const stringToHash = (str: string): number => {
@@ -107,7 +115,6 @@ const VideoPlayer: React.FC = () => {
                     autoPlay
                     onTimeUpdate={handleTimeUpdate}
                     onLoadedMetadata={handleVideoLoad}
-                    onResize={handleResize}
                     style={{ width: '100%', backgroundColor: 'black' }}
                 />
 
