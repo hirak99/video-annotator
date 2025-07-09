@@ -148,7 +148,7 @@ const VideoPlayer: React.FC = () => {
                                     event.stopPropagation();
                                     const boxRef = event.currentTarget;
                                     const boxId = boxRef.getAttribute('data-box-id');
-                                    const box = boxes.find(b => b.id === boxId);
+                                    let box = boxes.find(b => b.id === boxId);
                                     if (box) {
                                         const startX = event.clientX;
                                         const startY = event.clientY;
@@ -170,15 +170,17 @@ const VideoPlayer: React.FC = () => {
                                             const newHeight = initialHeight + deltaY * scaleFactor;
 
                                             if (isBottomRight) {
-                                                setBoxes(boxes.map(b => b.id === boxId ? { ...b, width: newWidth, height: newHeight } : b));
+                                                box = { ...box!,  width: newWidth, height: newHeight };
                                             } else {
-                                                setBoxes(boxes.map(b => b.id === boxId ? { ...b, x: newX, y: newY } : b));
+                                                box = { ...box!, x: newX, y: newY};
                                             }
+                                            setBoxes(boxes.map(b => b.id === boxId ? box! : b));
                                         };
 
                                         const handleMouseUp = () => {
                                             document.removeEventListener('mousemove', handleMouseMove);
                                             document.removeEventListener('mouseup', handleMouseUp);
+                                            handleUpdateBox(box!);
                                         };
 
                                         document.addEventListener('mousemove', handleMouseMove);
