@@ -146,15 +146,27 @@ const VideoPlayer: React.FC = () => {
                                         const startY = event.clientY;
                                         const initialX = box.x;
                                         const initialY = box.y;
+                                        const initialWidth = box.width;
+                                        const initialHeight = box.height;
 
                                         const scaleFactor = videoDimensions.naturalWidth / videoDimensions.displayWidth;
+
+                                        // Check if the user clicked the bottom right of the box
+                                        const isBottomRight = event.clientX >= boxRef.offsetLeft + boxRef.offsetWidth - 5 && event.clientY >= boxRef.offsetTop + boxRef.offsetHeight - 5;
 
                                         const handleMouseMove = (event: MouseEvent) => {
                                             const deltaX = event.clientX - startX;
                                             const deltaY = event.clientY - startY;
                                             const newX = initialX + deltaX * scaleFactor;
                                             const newY = initialY + deltaY * scaleFactor;
-                                            setBoxes(boxes.map(b => b.id === boxId ? { ...b, x: newX, y: newY } : b));
+                                            const newWidth = initialWidth + deltaX * scaleFactor;
+                                            const newHeight = initialHeight + deltaY * scaleFactor;
+
+                                            if (isBottomRight) {
+                                                setBoxes(boxes.map(b => b.id === boxId ? { ...b, width: newWidth, height: newHeight } : b));
+                                            } else {
+                                                setBoxes(boxes.map(b => b.id === boxId ? { ...b, x: newX, y: newY } : b));
+                                            }
                                         };
 
                                         const handleMouseUp = () => {
