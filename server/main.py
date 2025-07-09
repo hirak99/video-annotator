@@ -41,16 +41,20 @@ def add_label():
     return jsonify({"status": "success", "label": new_label}), 201
 
 
-@app.route("/api/update-label", methods=["POST"])
-def update_label():
-    updated_label = request.json
+@app.route("/api/update-label/<string:box_id>", methods=["PUT"])
+def update_label(box_id):
+    updated_label_data = request.json
     labels = _load_labels()
     for idx, label in enumerate(labels):
-        if label["id"] == updated_label["id"]:
-            labels[idx] = updated_label
-            break
-    _save_labels(labels)
-    return jsonify({"status": "success", "label": updated_label})
+        if label["id"] == box_id:
+            # Update the existing label with the new data, keeping the original ID
+            label.update(updated_label_data)
+            label["id"] = box_id # Ensure ID is not changed if updated_label_data contains it
+            labels[idx] = label # Assign the updated label back to the list
+            _save_labels(labels)
+            return jsonify({"status": "success", "label": labels[idx]})
+    # If the box_id is not found
+    return jsonify({"status": "error", "message": f"Label with id {box_id} not found"}), 404
 
 
 @app.route("/api/video", methods=["GET"])

@@ -45,6 +45,11 @@ const VideoPlayer: React.FC = () => {
         return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     };
 
+    const handleUpdateBox = (updatedBox: Box) => {
+        setBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
+        axios.put(`${BACKEND_URL}/api/update-label/${updatedBox.id}`, updatedBox); // Assuming a PUT endpoint for updating
+    };
+
     const addBox = () => {
         const newBox = {
             id: Date.now().toString(),
@@ -102,7 +107,7 @@ const VideoPlayer: React.FC = () => {
             <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
                 <h3>Added Boxes</h3>
                 {boxes.map(box => (
-                    <SidebarItem key={box.id} box={box} />
+                    <SidebarItem key={box.id} box={box} onUpdateBox={handleUpdateBox} />
                 ))}
                 <button onClick={addBox}>Add Box</button>
             </div> {/* End of sidebar */}
