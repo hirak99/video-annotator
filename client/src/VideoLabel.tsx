@@ -1,16 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
-
-interface Box {
-    id: string;
-    name: string;
-    start: number;
-    end: number;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-}
+import SidebarItem from './SidebarItem';
+import { Box } from './types';
 
 // Backend URL.
 const BACKEND_URL = 'http://localhost:5050'; // Should be in an env file for production
@@ -110,16 +101,12 @@ const VideoPlayer: React.FC = () => {
             {/* Sidebar */}
             <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
                 <h3>Added Boxes</h3>
-                <ul>
-                    {boxes.map(box => (
-                        <li key={box.id}>
-                            <strong>{box.name}</strong> (Time: {box.start.toFixed(2)}s - {box.end.toFixed(2)}s)
-                        </li>
-                    ))}
-                </ul>
+                {boxes.map(box => (
+                    <SidebarItem key={box.id} box={box} />
+                ))}
+                <button onClick={addBox}>Add Box</button>
             </div> {/* End of sidebar */}
 
-            <button onClick={addBox}>Add Box</button>
         </div>
     );
 };
