@@ -4,10 +4,11 @@ import { Box } from './types';
 interface SidebarItemProps {
     box: Box;
     onUpdateBox: (updatedBox: Box) => void;
+    onDeleteBox: (boxId: string) => void; // Add onDeleteBox prop
     currentTime: number; // Add currentTime prop
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, currentTime }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, onDeleteBox, currentTime }) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStart, setIsEditingStart] = useState(false);
     const [isEditingEnd, setIsEditingEnd] = useState(false);
@@ -137,6 +138,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, currentTime
                 <div style={{ display: 'flex', gap: '5px' }}>
                     <button onClick={handleSetStart} style={{ padding: '2px 5px' }} aria-label="Set Start Time">◁</button> {/* Using a play icon */}
                     <button onClick={handleSetEnd} style={{ padding: '2px 5px' }} aria-label="Set End Time">▷</button> {/* Using a stop icon */}
+                    <button onClick={() => onDeleteBox(box.id)} style={{ padding: '2px 5px', color: 'red' }} aria-label="Delete Box">✖</button> {/* Using a cross icon */}
                 </div>
             </div>
     );

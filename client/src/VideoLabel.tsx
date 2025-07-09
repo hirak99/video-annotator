@@ -45,6 +45,11 @@ const VideoPlayer: React.FC = () => {
         return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
     };
 
+    const handleDeleteBox = (boxId: string) => {
+        setBoxes(boxes.filter(box => box.id !== boxId));
+        axios.delete(`${BACKEND_URL}/api/delete-label/${boxId}`); // Assuming a DELETE endpoint for deleting
+    };
+
     const handleUpdateBox = (updatedBox: Box) => {
         setBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
         axios.put(`${BACKEND_URL}/api/update-label/${updatedBox.id}`, updatedBox); // Assuming a PUT endpoint for updating
@@ -108,7 +113,7 @@ const VideoPlayer: React.FC = () => {
                 <h3>Added Boxes</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}> {/* Flex grid for items */}
                     {boxes.map(box => (
-                        <SidebarItem key={box.id} box={box} onUpdateBox={handleUpdateBox} currentTime={currentTime} />
+                        <SidebarItem key={box.id} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
                     ))}
                 </div>
                 <button onClick={addBox} style={{ marginTop: '10px' }}>Add Box</button>

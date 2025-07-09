@@ -57,6 +57,18 @@ def update_label(box_id):
     return jsonify({"status": "error", "message": f"Label with id {box_id} not found"}), 404
 
 
+@app.route("/api/delete-label/<string:box_id>", methods=["DELETE"])
+def delete_label(box_id):
+    labels = _load_labels()
+    initial_count = len(labels)
+    labels = [label for label in labels if label["id"] != box_id]
+    if len(labels) < initial_count:
+        _save_labels(labels)
+        return jsonify({"status": "success", "message": f"Label with id {box_id} deleted"})
+    else:
+        return jsonify({"status": "error", "message": f"Label with id {box_id} not found"}), 404
+
+
 @app.route("/api/video", methods=["GET"])
 def stream_video():
     file_size = os.path.getsize(VIDEO_PATH)
