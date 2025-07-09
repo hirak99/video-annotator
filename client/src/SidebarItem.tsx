@@ -4,9 +4,10 @@ import { Box } from './types';
 interface SidebarItemProps {
     box: Box;
     onUpdateBox: (updatedBox: Box) => void;
+    currentTime: number; // Add currentTime prop
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, currentTime }) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStart, setIsEditingStart] = useState(false);
     const [isEditingEnd, setIsEditingEnd] = useState(false);
@@ -63,6 +64,17 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox }) => {
         setIsEditingEnd(false);
     };
 
+    const handleSetStart = () => {
+        onUpdateBox({ ...box, start: currentTime });
+        setStartTime(currentTime.toFixed(2)); // Update local state immediately
+    };
+
+    const handleSetEnd = () => {
+        onUpdateBox({ ...box, end: currentTime });
+        setEndTime(currentTime.toFixed(2)); // Update local state immediately
+    };
+
+
     return (
         <li>
             {isEditingName ? (
@@ -112,6 +124,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox }) => {
                 </span>
             )}
             )
+            <button onClick={handleSetStart} style={{ marginLeft: '10px', padding: '2px 5px' }}>Start Here</button>
+            <button onClick={handleSetEnd} style={{ marginLeft: '5px', padding: '2px 5px' }}>End Here</button>
         </li>
     );
 };

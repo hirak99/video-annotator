@@ -107,7 +107,7 @@ const VideoPlayer: React.FC = () => {
             <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
                 <h3>Added Boxes</h3>
                 {boxes.map(box => (
-                    <SidebarItem key={box.id} box={box} onUpdateBox={handleUpdateBox} />
+                    <SidebarItem key={box.id} box={box} onUpdateBox={handleUpdateBox} currentTime={currentTime} />
                 ))}
                 <button onClick={addBox}>Add Box</button>
             </div> {/* End of sidebar */}
