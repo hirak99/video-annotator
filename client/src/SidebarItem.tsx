@@ -1,6 +1,17 @@
 import React, { useState } from 'react';
 import { Box } from './types';
 
+const formatTime = (seconds: number): string => {
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = seconds % 60;
+  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(2).padStart(5, '0')}`;
+};
+
+const parseTime = (timeString: string): number => {
+  const [minutes, seconds] = timeString.split(':').map(Number);
+  return minutes * 60 + seconds;
+};
+
 interface SidebarItemProps {
     box: Box;
     onUpdateBox: (updatedBox: Box) => void;
@@ -13,8 +24,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, onDeleteBox
     const [isEditingStart, setIsEditingStart] = useState(false);
     const [isEditingEnd, setIsEditingEnd] = useState(false);
     const [boxName, setBoxName] = useState(box.name);
-    const [startTime, setStartTime] = useState(box.start.toFixed(2));
-    const [endTime, setEndTime] = useState(box.end.toFixed(2));
+    const [startTime, setStartTime] = useState(formatTime(box.start));
+    const [endTime, setEndTime] = useState(formatTime(box.end));
 
     const handleNameClick = () => {
         setIsEditingName(true);
@@ -46,33 +57,35 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, onDeleteBox
     };
 
     const handleStartBlur = () => {
-        const newStartTime = parseFloat(startTime);
-        if (!isNaN(newStartTime)) {
+        try {
+            const newStartTime = parseTime(startTime);
             onUpdateBox({ ...box, start: newStartTime });
-        } else {
-            setStartTime(box.start.toFixed(2)); // Revert if invalid input
+            setStartTime(formatTime(newStartTime));
+        } catch {
+            setStartTime(formatTime(box.start)); // Revert if invalid input
         }
         setIsEditingStart(false);
     };
 
     const handleEndBlur = () => {
-        const newEndTime = parseFloat(endTime);
-        if (!isNaN(newEndTime)) {
+        try {
+            const newEndTime = parseTime(endTime);
             onUpdateBox({ ...box, end: newEndTime });
-        } else {
-            setEndTime(box.end.toFixed(2)); // Revert if invalid input
+            setEndTime(formatTime(newEndTime));
+        } catch {
+            setEndTime(formatTime(box.end)); // Revert if invalid input
         }
         setIsEditingEnd(false);
     };
 
     const handleSetStart = () => {
         onUpdateBox({ ...box, start: currentTime });
-        setStartTime(currentTime.toFixed(2)); // Update local state immediately
+        setStartTime(formatTime(currentTime)); // Update local state immediately
     };
 
     const handleSetEnd = () => {
         onUpdateBox({ ...box, end: currentTime });
-        setEndTime(currentTime.toFixed(2)); // Update local state immediately
+        setEndTime(formatTime(currentTime)); // Update local state immediately
     };
 
 
@@ -100,17 +113,17 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, onDeleteBox
             <div>
                 {isEditingStart ? (
                     <input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={startTime}
                         onChange={handleStartTimeChange}
                         onBlur={handleStartBlur}
                         autoFocus
                         style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
+                        placeholder="mm:ss.ss"
                     />
                 ) : (
                     <span onClick={handleStartClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' }}>
-                        {box.start.toFixed(2)}s
+                        {formatTime(box.start)}
                     </span>
                 )}
             </div>
@@ -119,17 +132,17 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, onDeleteBox
             <div>
                 {isEditingEnd ? (
                     <input
-                        type="number"
-                        step="0.01"
+                        type="text"
                         value={endTime}
                         onChange={handleEndTimeChange}
                         onBlur={handleEndBlur}
                         autoFocus
                         style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
+                        placeholder="mm:ss.ss"
                     />
                 ) : (
                     <span onClick={handleEndClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' }}>
-                        {box.end.toFixed(2)}s
+                        {formatTime(box.end)}
                     </span>
                 )}
             </div>
