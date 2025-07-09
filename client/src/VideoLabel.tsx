@@ -112,7 +112,7 @@ const VideoPlayer: React.FC = () => {
             <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
                 <h3>Added Boxes</h3>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '10px' }}> {/* Flex grid for items */}
-                    {boxes.map(box => (
+                    {boxes.sort((a, b) => a.start - b.start).map(box => (
                         <SidebarItem key={box.id} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
                     ))}
                 </div>
