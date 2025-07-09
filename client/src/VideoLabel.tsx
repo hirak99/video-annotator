@@ -14,6 +14,12 @@ const getBackendPromise = async (endpoint: string) => {
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time (absolute)
+    const [videoDimensions, setVideoDimensions] = useState({
+        naturalWidth: 0,
+        naturalHeight: 0,
+        displayWidth: 0,
+        displayHeight: 0
+    });
     const playerRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
@@ -24,6 +30,26 @@ const VideoPlayer: React.FC = () => {
 
     const handleTimeUpdate = (event: React.SyntheticEvent<HTMLVideoElement>) => {
         setCurrentTime(event.currentTarget.currentTime);
+    };
+
+    const handleVideoLoad = (event: React.SyntheticEvent<HTMLVideoElement>) => {
+        const video = event.currentTarget;
+        setVideoDimensions({
+            naturalWidth: video.videoWidth,
+            naturalHeight: video.videoHeight,
+            displayWidth: video.clientWidth,
+            displayHeight: video.clientHeight
+        });
+    };
+
+    const handleResize = () => {
+        if (playerRef.current) {
+            setVideoDimensions(prev => ({
+                ...prev,
+                displayWidth: playerRef.current!.clientWidth,
+                displayHeight: playerRef.current!.clientHeight
+            }));
+        }
     };
 
     // Simple string hashing function to generate a number
@@ -80,6 +106,8 @@ const VideoPlayer: React.FC = () => {
                     controls
                     autoPlay
                     onTimeUpdate={handleTimeUpdate}
+                    onLoadedMetadata={handleVideoLoad}
+                    onResize={handleResize}
                     style={{ width: '100%', backgroundColor: 'black' }}
                 />
 
@@ -92,10 +120,10 @@ const VideoPlayer: React.FC = () => {
                                 key={box.id}
                                 style={{
                                     position: 'absolute', // Positions relative to the box container
-                                    top: box.y,
-                                    left: box.x,
-                                    width: box.width,
-                                    height: box.height,
+                                    top: `${(box.y / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
+                                    left: `${(box.x / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
+                                    width: `${(box.width / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
+                                    height: `${(box.height / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
                                     border: `2px solid ${hashToHSLColor(stringToHash(box.name))}`,
                                     background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
                                     pointerEvents: 'auto', // Allow pointer events on the individual boxes
