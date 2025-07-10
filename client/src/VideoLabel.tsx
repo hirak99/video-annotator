@@ -15,6 +15,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
     const [currentVideoId, setCurrentVideoId] = useState<number>(1); // Set current ID to 1
+    const [videoFiles, setVideoFiles] = useState<[number, string][]>([]); // To store video files
     const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time (absolute)
     const [videoDimensions, setVideoDimensions] = useState({
         naturalWidth: 0,
@@ -27,15 +28,16 @@ const VideoPlayer: React.FC = () => {
     useEffect(() => {
         getBackendPromise('/api/video-files').then(response => {
             const videoFiles = response.data;
+            setVideoFiles(videoFiles); // Store video files
             if (videoFiles.length > 0) {
                 setCurrentVideoId(videoFiles[0][0]); // Set current ID to the first video's ID
             }
         });
 
-        getBackendPromise('/api/labels', 1).then(response => {
+        getBackendPromise('/api/labels', currentVideoId).then(response => {
             setBoxes(response.data);  // Get labeled boxes data for the current video
         });
-    }, []);
+    }, [currentVideoId]);
 
     const handleTimeUpdate = (event: React.SyntheticEvent<HTMLVideoElement>) => {
         setCurrentTime(event.currentTarget.currentTime);
@@ -122,6 +124,12 @@ const VideoPlayer: React.FC = () => {
     return (
         <div style={{ display: 'flex' }}> {/* Main container with flex display */}
             <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
+                {/* List of videos */}
+                <select onChange={(e) => setCurrentVideoId(Number(e.target.value))}>
+                    {videoFiles.map(([id, name]) => (
+                        <option key={id} value={id}>{name}</option>
+                    ))}
+                </select>
                 {/* Video Player */}
                 <video
                     ref={playerRef}
