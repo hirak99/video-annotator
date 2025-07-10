@@ -1,4 +1,6 @@
 labels:
+  - name: (unknown)
+    overlap: true
   - name: blur
     overlap: true
   - name: roi1

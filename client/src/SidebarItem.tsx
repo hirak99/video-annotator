@@ -2,14 +2,14 @@ import React, { useState } from 'react';
 import { Box, LabelType } from './types';
 
 const formatTime = (seconds: number): string => {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(2).padStart(5, '0')}`;
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(2).padStart(5, '0')}`;
 };
 
 const parseTime = (timeString: string): number => {
-  const [minutes, seconds] = timeString.split(':').map(Number);
-  return minutes * 60 + seconds;
+    const [minutes, seconds] = timeString.split(':').map(Number);
+    return minutes * 60 + seconds;
 };
 
 interface SidebarItemProps {
@@ -40,21 +40,12 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
         setIsEditingEnd(true);
     };
 
-    const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setBoxName(e.target.value);
-    };
-
     const handleStartTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setStartTime(e.target.value);
     };
 
     const handleEndTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setEndTime(e.target.value);
-    };
-
-    const handleNameBlur = () => {
-        onUpdateBox({ ...box, name: boxName });
-        setIsEditingName(false);
     };
 
     const handleStartBlur = () => {
@@ -95,14 +86,22 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
             {/* Box Name */}
             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {isEditingName ? (
-                    <input
-                        type="text"
-                        value={boxName}
-                        onChange={handleNameChange}
-                        onBlur={handleNameBlur}
-                        autoFocus
+                    <select
+                        key={box.id}
+                        value={box.name}
+                        onChange={(event) => {
+                            setBoxName(event.target.value);
+                            onUpdateBox({ ...box, name: event.target.value });
+                            setIsEditingName(false);
+                        }}
                         style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
-                    />
+                    >
+                        {labelTypes.map((labelType) => (
+                            <option>
+                                {labelType.name}
+                            </option>
+                        ))}
+                    </select>
                 ) : (
                     <strong onClick={handleNameClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' }}>
                         {box.name}
@@ -148,13 +147,13 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
                 )}
             </div>
 
-                {/* Buttons */}
-                <div style={{ display: 'flex', gap: '5px' }}>
-                    <button onClick={handleSetStart} style={{ padding: '2px 5px' }} aria-label="Set Start Time">◁</button> {/* Using a play icon */}
-                    <button onClick={handleSetEnd} style={{ padding: '2px 5px' }} aria-label="Set End Time">▷</button> {/* Using a stop icon */}
-                    <button onClick={() => onDeleteBox(box.id)} style={{ padding: '2px 5px', color: 'red' }} aria-label="Delete Box">✖</button> {/* Using a cross icon */}
-                </div>
+            {/* Buttons */}
+            <div style={{ display: 'flex', gap: '5px' }}>
+                <button onClick={handleSetStart} style={{ padding: '2px 5px' }} aria-label="Set Start Time">◁</button> {/* Using a play icon */}
+                <button onClick={handleSetEnd} style={{ padding: '2px 5px' }} aria-label="Set End Time">▷</button> {/* Using a stop icon */}
+                <button onClick={() => onDeleteBox(box.id)} style={{ padding: '2px 5px', color: 'red' }} aria-label="Delete Box">✖</button> {/* Using a cross icon */}
             </div>
+        </div>
     );
 };
 
