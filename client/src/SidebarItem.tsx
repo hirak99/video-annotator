@@ -4,7 +4,7 @@ import { Box, LabelType } from './types';
 const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
     const remainingSeconds = seconds % 60;
-    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(2).padStart(5, '0')}`;
+    return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toFixed(1).padStart(4, '0')}`;
 };
 
 const parseTime = (timeString: string): number => {
@@ -24,7 +24,6 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStart, setIsEditingStart] = useState(false);
     const [isEditingEnd, setIsEditingEnd] = useState(false);
-    const [boxName, setBoxName] = useState(box.name);
     const [startTime, setStartTime] = useState(formatTime(box.start));
     const [endTime, setEndTime] = useState(formatTime(box.end));
 
@@ -71,7 +70,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
     };
 
     const handleSetStart = () => {
-        onUpdateBox({ ...box, start: currentTime });
+        // If the start is less than end, set newEndTime to start + 1.
+        const newEndTime = currentTime >= box.end ? currentTime + 1 : box.end;
+        onUpdateBox({ ...box, start: currentTime, end: newEndTime });
         setStartTime(formatTime(currentTime)); // Update local state immediately
     };
 
@@ -90,7 +91,6 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
                         key={box.id}
                         value={box.name}
                         onChange={(event) => {
-                            setBoxName(event.target.value);
                             onUpdateBox({ ...box, name: event.target.value });
                             setIsEditingName(false);
                         }}

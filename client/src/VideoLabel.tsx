@@ -14,6 +14,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
+    const [labelError, setLabelError] = useState<string>("");
     const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
     const [videoFiles, setVideoFiles] = useState<any[]>([]);
     const [labelTypes, setLabelTypes] = useState<LabelType[]>([]);
@@ -76,6 +77,44 @@ const VideoPlayer: React.FC = () => {
         return () => observer.disconnect();
     }, []);
 
+    useEffect(() => {
+        // Check if box intervals overlap in time with same type of label, for any labelType which should not overlap.
+        const overlappingLabels: { [key: string]: { start: number; end: number; id: string }[] } = {};
+
+        for (const box of boxes) {
+            const labelType = labelTypes.find(lt => lt.name === box.name);
+            if (labelType && !labelType.allow_overlap) {
+                if (!overlappingLabels[box.name]) {
+                    overlappingLabels[box.name] = [];
+                }
+                overlappingLabels[box.name].push({ start: box.start, end: box.end, id: box.id });
+            }
+        }
+
+        // Store the overlapping label names in an array.
+        const overlappingLabelNames: string[] = [];
+        for (const labelName in overlappingLabels) {
+            const intervals = overlappingLabels[labelName].sort((a, b) => a.start - b.start);
+            for (let i = 0; i < intervals.length - 1; i++) {
+                if (intervals[i].end > intervals[i + 1].start) {
+                    overlappingLabelNames.push(labelName);
+                    break;
+                }
+            }
+        }
+
+        // Generate an error of the form "Following labels do not allow overlap: 'person1', 'person2'. Please remove any overlap in time."
+        let error = "";
+        if (overlappingLabelNames.length > 0) {
+            error = `Following labels do not allow overlap: '${overlappingLabelNames.join("', '")}'. Please ensure that there is no overlap at any time.`;
+        }
+
+        setLabelError(error);
+
+
+    }, [boxes, labelTypes]);
+
+
     // Simple string hashing function to generate a number
     const stringToHash = (str: string): number => {
         let hash = 0;
@@ -130,23 +169,25 @@ const VideoPlayer: React.FC = () => {
     return (
         <div style={{ display: 'flex' }}> {/* Main container with flex display */}
             <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
-                {/* List of videos */}
-                <select onChange={(e) => setCurrentVideoIdx(Number(e.target.value))}>
-                    {videoFiles.map((file, index) => (
-                        <option key={index} value={index}>{file["video_file"]}</option>
-                    ))}
-                </select>
+                <div>
+                    {/* List of videos */}
+                    <select className="video-select" value={currentVideoIdx} onChange={(e) => setCurrentVideoIdx(Number(e.target.value))}>
+                        {videoFiles.map((file, index) => (
+                            <option key={index} value={index}>{file["video_file"]}</option>
+                        ))}
+                    </select>
 
-                {/* Video Player */}
-                <video
-                    ref={playerRef}
-                    src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
-                    controls
-                    autoPlay
-                    onTimeUpdate={handleTimeUpdate}
-                    onLoadedMetadata={handleVideoLoad}
-                    style={{ width: '100%', backgroundColor: 'black' }}
-                />
+                    {/* Video Player */}
+                    <video
+                        ref={playerRef}
+                        src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
+                        controls
+                        autoPlay
+                        onTimeUpdate={handleTimeUpdate}
+                        onLoadedMetadata={handleVideoLoad}
+                        style={{ width: '100%', backgroundColor: 'black' }}
+                    />
+                </div>
 
                 {/* Label Boxes */}
                 <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}> {/* Box container */}
@@ -234,6 +275,14 @@ const VideoPlayer: React.FC = () => {
                 <div style={{ paddingBottom: '10px', borderBottom: '1px solid #eee', marginBottom: '10px' }}>
                     <span>ROIs</span> <button onClick={addBox} style={{ marginTop: '10px' }}>Add</button>
                 </div>
+
+                {/* Div to show labelError and hidden if error is empty */}
+                {labelError && (
+                    <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>
+                        {labelError}
+                    </div>
+                )}
+
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}> {/* Flex grid for items */}
                     {boxes.sort((a, b) => a.start - b.start).map(box => (
                         <SidebarItem key={box.id} labelTypes={labelTypes} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />

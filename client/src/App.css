@@ -23,3 +23,32 @@
   font-size: calc(10px + 2vmin);
   color: white;
 }
+
+/* Define a nice style for select with class "video-select" */
+.video-select {
+  width: 100%;
+  border: 1px solid #222;
+  border-radius: 4px;
+  background-color: #111;
+  font-size: 16px;
+  color: #999;
+  cursor: pointer;
+  appearance: none; /* Remove default browser styling */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%204%205%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M2%200L0%202h4zm0%205L0%203h4z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 8px 10px;
+}
+
+.video-select:focus {
+  border-color: #007bff;
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.video-select option {
+  padding: 8px 10px;
+}
+
