@@ -14,8 +14,8 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
-    const [currentVideoId, setCurrentVideoId] = useState<number>(1); // Set current ID to 1
-    const [videoFiles, setVideoFiles] = useState<[number, string][]>([]); // To store video files
+    const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
+    const [videoFiles, setVideoFiles] = useState<any[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time (absolute)
     const [videoDimensions, setVideoDimensions] = useState({
         naturalWidth: 0,
@@ -30,14 +30,16 @@ const VideoPlayer: React.FC = () => {
             const videoFiles = response.data;
             setVideoFiles(videoFiles); // Store video files
             if (videoFiles.length > 0) {
-                setCurrentVideoId(videoFiles[0][0]); // Set current ID to the first video's ID
+                setCurrentVideoIdx(0);
             }
         });
+    }, []);
 
-        getBackendPromise('/api/labels', currentVideoId).then(response => {
+    useEffect(() => {
+        getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
             setBoxes(response.data);  // Get labeled boxes data for the current video
         });
-    }, [currentVideoId]);
+    }, [currentVideoIdx]);
 
     const handleTimeUpdate = (event: React.SyntheticEvent<HTMLVideoElement>) => {
         setCurrentTime(event.currentTarget.currentTime);
@@ -91,12 +93,12 @@ const VideoPlayer: React.FC = () => {
 
     const handleDeleteBox = (boxId: string) => {
         setBoxes(boxes.filter(box => box.id !== boxId));
-        axios.delete(`${BACKEND_URL}/api/delete-label/${currentVideoId}/${boxId}`); // Assuming a DELETE endpoint for deleting
+        axios.delete(`${BACKEND_URL}/api/delete-label/${currentVideoIdx}/${boxId}`); // Assuming a DELETE endpoint for deleting
     };
 
     const handleUpdateBox = (updatedBox: Box) => {
         setBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
-        axios.put(`${BACKEND_URL}/api/update-label/${currentVideoId}/${updatedBox.id}`, updatedBox); // Assuming a PUT endpoint for updating
+        axios.put(`${BACKEND_URL}/api/update-label/${currentVideoIdx}/${updatedBox.id}`, updatedBox); // Assuming a PUT endpoint for updating
     };
 
     const addBox = () => {
@@ -111,7 +113,7 @@ const VideoPlayer: React.FC = () => {
             height: 100,
         };
         setBoxes([...boxes, newBox]);
-        axios.post(`${BACKEND_URL}/api/add-label/${currentVideoId}`, newBox);  // Save new label on the server
+        axios.post(`${BACKEND_URL}/api/add-label/${currentVideoIdx}`, newBox);  // Save new label on the server
     };
 
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
@@ -125,15 +127,16 @@ const VideoPlayer: React.FC = () => {
         <div style={{ display: 'flex' }}> {/* Main container with flex display */}
             <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
                 {/* List of videos */}
-                <select onChange={(e) => setCurrentVideoId(Number(e.target.value))}>
-                    {videoFiles.map(([id, name]) => (
-                        <option key={id} value={id}>{name}</option>
+                <select onChange={(e) => setCurrentVideoIdx(Number(e.target.value))}>
+                    {videoFiles.map((file, index) => (
+                        <option key={index} value={index}>{file["video_file"]}</option>
                     ))}
                 </select>
+
                 {/* Video Player */}
                 <video
                     ref={playerRef}
-                    src={`${BACKEND_URL}/api/video/${currentVideoId}`} // Use the new endpoint
+                    src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
                     controls
                     autoPlay
                     onTimeUpdate={handleTimeUpdate}
