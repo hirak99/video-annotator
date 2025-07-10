@@ -1,0 +1,8 @@
+videos:
+  - id: 1
+    video_file: "video.mkv"
+    label_file: "labels.json"
+  - id: 2
+    video_file: "video2.mkv"
+    label_file: "labels2.json"
+

@@ -9,8 +9,14 @@ import flask_cors
 app = flask.Flask(__name__)
 flask_cors.CORS(app)  # Enable CORS for frontend to communicate with the backend
 
-VIDEO_PATH = "video.mkv"
-LABELS_FILE = "labels.json"
+import yaml
+
+# Load video files from YAML
+with open("video_files.yaml", "r") as f:
+    video_files = yaml.safe_load(f)["videos"]
+
+VIDEO_PATH = "video1.mkv"  # Default video path
+LABELS_FILE = "labels1.json"  # Default labels path
 
 
 # Simple function to get labels from a JSON file
@@ -71,7 +77,12 @@ def delete_label(model_id, box_id):
 
 @app.route("/api/video/<string:model_id>", methods=["GET"])
 def stream_video(model_id):
-    file_size = os.path.getsize(VIDEO_PATH)
+    video = next((video for video in video_files if str(video["id"]) == model_id), None)
+    if not video:
+        return jsonify({"status": "error", "message": f"Video with id {model_id} not found"}), 404
+
+    video_path = video["video_file"]
+    file_size = os.path.getsize(video_path)
 
     # Get the range from the request headers (e.g., "bytes=0-1023")
     range_header = request.headers.get("Range", None)
@@ -87,7 +98,7 @@ def stream_video(model_id):
         content_length = byte2 - byte1 + 1
 
         # Open the file and read the requested range
-        with open(VIDEO_PATH, "rb") as video_file:
+        with open(video_path, "rb") as video_file:
             video_file.seek(byte1)
             data = video_file.read(content_length)
 
@@ -99,7 +110,7 @@ def stream_video(model_id):
         return response
 
     # If no range is provided, send the whole video
-    with open(VIDEO_PATH, "rb") as video_file:
+    with open(video_path, "rb") as video_file:
         data = video_file.read()
 
     return flask.Response(data, mimetype="video/mp4")
@@ -107,7 +118,7 @@ def stream_video(model_id):
 
 # Function to get a list of video files with their IDs
 def _get_video_files():
-    return [[1, "video.mkv"]]
+    return [[video["id"], video["video_file"]] for video in video_files]
 
 @app.route("/api/video-files", methods=["GET"])
 def get_video_files():
