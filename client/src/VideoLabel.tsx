@@ -3,7 +3,7 @@ import ResizeObserver from 'resize-observer-polyfill';
 import axios from 'axios';
 import SidebarItem from './SidebarItem';
 import { Box, LabelType } from './types';
-import Boxes from './Boxes';
+import LabelRenderer from './LabelRenderer';
 
 // Backend URL.
 const BACKEND_URL = 'http://localhost:5050'; // Should be in an env file for production
@@ -161,7 +161,7 @@ const VideoPlayer: React.FC = () => {
                     />
 
                     {/* Label Boxes */}
-                    <Boxes
+                    <LabelRenderer
                         boxes={boxes}
                         currentTime={currentTime}
                         videoDimensions={videoDimensions}

@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef } from 'react';
 import { Box } from './types';
 import { hashToHSLColor, stringToHash } from './utils';
 
-interface BoxesProps {
+interface LabelRendererProps {
     boxes: Box[];
     currentTime: number;
     videoDimensions: {
@@ -15,7 +14,7 @@ interface BoxesProps {
     setBoxes: (updatedBoxes: Box[]) => void;
 }
 
-const Boxes: React.FC<BoxesProps> = ({ boxes, currentTime, videoDimensions, handleUpdateBox, setBoxes }) => {
+const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, videoDimensions, handleUpdateBox, setBoxes }) => {
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
         const target = event.target as HTMLElement;
         const rect = target.getBoundingClientRect();
@@ -103,4 +102,4 @@ const Boxes: React.FC<BoxesProps> = ({ boxes, currentTime, videoDimensions, hand
     );
 };
 
-export default Boxes;
+export default LabelRenderer;
