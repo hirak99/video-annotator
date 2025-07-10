@@ -83,13 +83,14 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
 
 
     return (
-        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: '120px 80px 80px 1fr', gap: '10px', alignItems: 'center' }}>
+        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: '120px 60px 60px 1fr', gap: '10px', alignItems: 'center' }}>
             {/* Box Name */}
             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {isEditingName ? (
                     <select
                         key={box.id}
                         value={box.name}
+                        onBlur={() => setIsEditingName(false)}
                         onChange={(event) => {
                             onUpdateBox({ ...box, name: event.target.value });
                             setIsEditingName(false);

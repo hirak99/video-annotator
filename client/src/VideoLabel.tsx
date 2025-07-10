@@ -167,16 +167,16 @@ const VideoPlayer: React.FC = () => {
 
 
     return (
-        <div style={{ display: 'flex' }}> {/* Main container with flex display */}
-            <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
-                <div>
-                    {/* List of videos */}
-                    <select className="video-select" value={currentVideoIdx} onChange={(e) => setCurrentVideoIdx(Number(e.target.value))}>
-                        {videoFiles.map((file, index) => (
-                            <option key={index} value={index}>{file["video_file"]}</option>
-                        ))}
-                    </select>
+        <div>
+            {/* List of videos */}
+            <select className="video-select" value={currentVideoIdx} onChange={(e) => setCurrentVideoIdx(Number(e.target.value))}>
+                {videoFiles.map((file, index) => (
+                    <option key={index} value={index}>{file["video_file"]}</option>
+                ))}
+            </select>
 
+            <div style={{ display: 'flex' }}> {/* Main container with flex display */}
+                <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
                     {/* Video Player */}
                     <video
                         ref={playerRef}
@@ -187,109 +187,109 @@ const VideoPlayer: React.FC = () => {
                         onLoadedMetadata={handleVideoLoad}
                         style={{ width: '100%', backgroundColor: 'black' }}
                     />
-                </div>
 
-                {/* Label Boxes */}
-                <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}> {/* Box container */}
-                    {boxes
-                        .filter(box => currentTime >= box.start && currentTime <= box.end)
-                        .map((box) => (
+                    {/* Label Boxes */}
+                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}> {/* Box container */}
+                        {boxes
+                            .filter(box => currentTime >= box.start && currentTime <= box.end)
+                            .map((box) => (
 
-                            <div
-                                key={box.id}
-                                data-box-id={box.id}
-                                style={{
-                                    position: 'absolute', // Positions relative to the box container
-                                    top: `${(box.y / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
-                                    left: `${(box.x / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
-                                    width: `${(box.width / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
-                                    height: `${(box.height / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
-                                    border: `2px solid ${hashToHSLColor(stringToHash(box.name))}`,
-                                    background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
-                                    pointerEvents: 'auto', // Allow pointer events on the individual boxes
-                                }}
-                                onMouseDown={(event) => {
-                                    event.stopPropagation();
-                                    const boxRef = event.currentTarget;
-                                    const boxId = boxRef.getAttribute('data-box-id');
-                                    let box = boxes.find(b => b.id === boxId);
-                                    if (box) {
-                                        const startX = event.clientX;
-                                        const startY = event.clientY;
-                                        const initialX = box.x;
-                                        const initialY = box.y;
-                                        const initialWidth = box.width;
-                                        const initialHeight = box.height;
+                                <div
+                                    key={box.id}
+                                    data-box-id={box.id}
+                                    style={{
+                                        position: 'absolute', // Positions relative to the box container
+                                        top: `${(box.y / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
+                                        left: `${(box.x / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
+                                        width: `${(box.width / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
+                                        height: `${(box.height / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
+                                        border: `2px solid ${hashToHSLColor(stringToHash(box.name))}`,
+                                        background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
+                                        pointerEvents: 'auto', // Allow pointer events on the individual boxes
+                                    }}
+                                    onMouseDown={(event) => {
+                                        event.stopPropagation();
+                                        const boxRef = event.currentTarget;
+                                        const boxId = boxRef.getAttribute('data-box-id');
+                                        let box = boxes.find(b => b.id === boxId);
+                                        if (box) {
+                                            const startX = event.clientX;
+                                            const startY = event.clientY;
+                                            const initialX = box.x;
+                                            const initialY = box.y;
+                                            const initialWidth = box.width;
+                                            const initialHeight = box.height;
 
-                                        const scaleFactor = videoDimensions.naturalWidth / videoDimensions.displayWidth;
+                                            const scaleFactor = videoDimensions.naturalWidth / videoDimensions.displayWidth;
 
-                                        const isBottomRight = isEventAtBottomRight(event);
+                                            const isBottomRight = isEventAtBottomRight(event);
 
-                                        const handleMouseMove = (event: MouseEvent) => {
-                                            const deltaX = event.clientX - startX;
-                                            const deltaY = event.clientY - startY;
-                                            const newX = initialX + deltaX * scaleFactor;
-                                            const newY = initialY + deltaY * scaleFactor;
-                                            const newWidth = initialWidth + deltaX * scaleFactor;
-                                            const newHeight = initialHeight + deltaY * scaleFactor;
+                                            const handleMouseMove = (event: MouseEvent) => {
+                                                const deltaX = event.clientX - startX;
+                                                const deltaY = event.clientY - startY;
+                                                const newX = initialX + deltaX * scaleFactor;
+                                                const newY = initialY + deltaY * scaleFactor;
+                                                const newWidth = initialWidth + deltaX * scaleFactor;
+                                                const newHeight = initialHeight + deltaY * scaleFactor;
 
-                                            if (isBottomRight) {
-                                                box = { ...box!, width: newWidth, height: newHeight };
-                                            } else {
-                                                box = { ...box!, x: newX, y: newY };
-                                            }
-                                            setBoxes(boxes.map(b => b.id === boxId ? box! : b));
-                                        };
+                                                if (isBottomRight) {
+                                                    box = { ...box!, width: newWidth, height: newHeight };
+                                                } else {
+                                                    box = { ...box!, x: newX, y: newY };
+                                                }
+                                                setBoxes(boxes.map(b => b.id === boxId ? box! : b));
+                                            };
 
-                                        const handleMouseUp = () => {
-                                            document.removeEventListener('mousemove', handleMouseMove);
-                                            document.removeEventListener('mouseup', handleMouseUp);
-                                            handleUpdateBox(box!);
-                                        };
+                                            const handleMouseUp = () => {
+                                                document.removeEventListener('mousemove', handleMouseMove);
+                                                document.removeEventListener('mouseup', handleMouseUp);
+                                                handleUpdateBox(box!);
+                                            };
 
-                                        document.addEventListener('mousemove', handleMouseMove);
-                                        document.addEventListener('mouseup', handleMouseUp);
-                                    }
-                                }}
-                                onMouseMove={(event) => {
-                                    const boxRef = event.currentTarget;
-                                    const boxId = boxRef.getAttribute('data-box-id');
-                                    const box = boxes.find(b => b.id === boxId);
-                                    if (box) {
-                                        if (isEventAtBottomRight(event)) {
-                                            boxRef.style.cursor = 'se-resize';
-                                        } else {
-                                            boxRef.style.cursor = 'move';
+                                            document.addEventListener('mousemove', handleMouseMove);
+                                            document.addEventListener('mouseup', handleMouseUp);
                                         }
-                                    }
-                                }}
-                            >
-                                {box.name}
-                            </div>
-                        ))}
-                </div>
-            </div> {/* End of video/box wrapper */}
-
-            {/* Sidebar */}
-            <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
-                <div style={{ paddingBottom: '10px', borderBottom: '1px solid #eee', marginBottom: '10px' }}>
-                    <span>ROIs</span> <button onClick={addBox} style={{ marginTop: '10px' }}>Add</button>
-                </div>
-
-                {/* Div to show labelError and hidden if error is empty */}
-                {labelError && (
-                    <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>
-                        {labelError}
+                                    }}
+                                    onMouseMove={(event) => {
+                                        const boxRef = event.currentTarget;
+                                        const boxId = boxRef.getAttribute('data-box-id');
+                                        const box = boxes.find(b => b.id === boxId);
+                                        if (box) {
+                                            if (isEventAtBottomRight(event)) {
+                                                boxRef.style.cursor = 'se-resize';
+                                            } else {
+                                                boxRef.style.cursor = 'move';
+                                            }
+                                        }
+                                    }}
+                                >
+                                    {box.name}
+                                </div>
+                            ))}
                     </div>
-                )}
+                </div> {/* End of video/box wrapper */}
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}> {/* Flex grid for items */}
-                    {boxes.sort((a, b) => a.start - b.start).map(box => (
-                        <SidebarItem key={box.id} labelTypes={labelTypes} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
-                    ))}
-                </div>
-            </div> {/* End of sidebar */}
+                {/* Sidebar */}
+                <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
+                    <div style={{ paddingBottom: '10px', borderBottom: '1px solid #eee', marginBottom: '10px' }}>
+                        <span>ROIs</span> <button onClick={addBox} style={{ marginTop: '10px' }}>Add</button>
+                    </div>
 
+                    {/* Div to show labelError and hidden if error is empty */}
+                    {labelError && (
+                        <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>
+                            {labelError}
+                        </div>
+                    )}
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}> {/* Flex grid for items */}
+                        {boxes.sort((a, b) => a.start - b.start).map(box => (
+                            <SidebarItem key={box.id} labelTypes={labelTypes} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
+                        ))}
+                    </div>
+                </div> {/* End of sidebar */}
+
+            </div>
         </div>
     );
 };

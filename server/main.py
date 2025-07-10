@@ -1,13 +1,13 @@
+import argparse
 import json
 import os
+from typing import TypedDict
 
 import flask
 from flask import jsonify
 from flask import request
 import flask_cors
 import yaml
-
-from typing import TypedDict
 
 
 class _LabelProperties(TypedDict):
@@ -151,13 +151,13 @@ def add_common_endpoints(
 
 
 class MainApp:
-    def __init__(self):
+    def __init__(self, config_file: str):
         self.app: flask.Flask = flask.Flask(__name__)
         # Enable CORS for frontend to communicate with the backend.
         flask_cors.CORS(self.app)
 
         # Load video files from YAML.
-        with open("configuration.yaml", "r") as f:
+        with open(config_file, "r") as f:
             config = yaml.safe_load(f)
 
         label_types: list[_LabelProperties] = config["labels"]
@@ -167,5 +167,14 @@ class MainApp:
 
 
 if __name__ == "__main__":
-    main_app = MainApp()
+    parser = argparse.ArgumentParser(description="Video Labeling Server")
+    parser.add_argument(
+        "-c",
+        "--config",
+        default="configuration.yaml",
+        help="Path to the configuration YAML file.",
+    )
+    args = parser.parse_args()
+
+    main_app = MainApp(config_file=args.config)
     main_app.app.run(debug=True, host="0.0.0.0", port=5050)
