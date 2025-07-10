@@ -1,3 +1,9 @@
+labels:
+  - name: blur
+    overlap: true
+  - name: roi1
+    overlap: false
+
 videos:
   - video_file: "video.mkv"
     label_file: "labels.json"

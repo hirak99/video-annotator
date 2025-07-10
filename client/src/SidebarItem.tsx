@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box } from './types';
+import { Box, LabelType } from './types';
 
 const formatTime = (seconds: number): string => {
   const minutes = Math.floor(seconds / 60);
@@ -13,13 +13,14 @@ const parseTime = (timeString: string): number => {
 };
 
 interface SidebarItemProps {
+    labelTypes: LabelType[];
     box: Box;
     onUpdateBox: (updatedBox: Box) => void;
     onDeleteBox: (boxId: string) => void; // Add onDeleteBox prop
     currentTime: number; // Add currentTime prop
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ box, onUpdateBox, onDeleteBox, currentTime }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox, onDeleteBox, currentTime }) => {
     const [isEditingName, setIsEditingName] = useState(false);
     const [isEditingStart, setIsEditingStart] = useState(false);
     const [isEditingEnd, setIsEditingEnd] = useState(false);

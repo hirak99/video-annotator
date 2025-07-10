@@ -8,3 +8,8 @@ export interface Box {
     width: number;
     height: number;
 }
+
+export interface LabelType {
+    name: string;
+    allow_overlap: boolean;
+}

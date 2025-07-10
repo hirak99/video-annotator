@@ -10,6 +10,11 @@ import yaml
 from typing import TypedDict
 
 
+class _LabelProperties(TypedDict):
+    name: str
+    allow_overlap: bool
+
+
 class _VideoFile(TypedDict):
     video_file: str
     label_file: str
@@ -19,7 +24,9 @@ class _VideoFile(TypedDict):
 # pyright: reportUnusedFunction=false
 
 
-def add_common_endpoints(app: flask.Flask, video_files: list[_VideoFile]):
+def add_common_endpoints(
+    app: flask.Flask, video_files: list[_VideoFile], label_types: list[_LabelProperties]
+):
     # Simple function to get labels from a JSON file
     def _load_labels(video_id: int):
         labels_file = video_files[video_id]["label_file"]
@@ -68,9 +75,7 @@ def add_common_endpoints(app: flask.Flask, video_files: list[_VideoFile]):
             404,
         )
 
-    @app.route(
-        "/api/delete-label/<int:video_id>/<string:box_id>", methods=["DELETE"]
-    )
+    @app.route("/api/delete-label/<int:video_id>/<string:box_id>", methods=["DELETE"])
     def delete_label(video_id, box_id):
         labels = _load_labels(video_id)
         initial_count = len(labels)
@@ -136,26 +141,29 @@ def add_common_endpoints(app: flask.Flask, video_files: list[_VideoFile]):
 
         return flask.Response(data, mimetype="video/mp4")
 
-    # Function to get a list of video files with their IDs
-
     @app.route("/api/video-files", methods=["GET"])
     def get_video_files():
         return jsonify(video_files)
+
+    @app.route("/api/label-types", methods=["GET"])
+    def get_label_types():
+        return jsonify(label_types)
 
 
 class MainApp:
     def __init__(self):
         self.app: flask.Flask = flask.Flask(__name__)
         # Enable CORS for frontend to communicate with the backend.
-        flask_cors.CORS(
-            self.app
-        )
+        flask_cors.CORS(self.app)
 
         # Load video files from YAML.
-        with open("video_files.yaml", "r") as f:
-            video_files = yaml.safe_load(f)["videos"]
+        with open("configuration.yaml", "r") as f:
+            config = yaml.safe_load(f)
 
-        add_common_endpoints(self.app, video_files=video_files)
+        label_types: list[_LabelProperties] = config["labels"]
+        video_files: list[_VideoFile] = config["videos"]
+
+        add_common_endpoints(self.app, video_files=video_files, label_types=label_types)
 
 
 if __name__ == "__main__":

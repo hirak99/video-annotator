@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import axios from 'axios';
 import SidebarItem from './SidebarItem';
-import { Box } from './types';
+import { Box, LabelType } from './types';
 
 // Backend URL.
 const BACKEND_URL = 'http://localhost:5050'; // Should be in an env file for production
@@ -16,6 +16,7 @@ const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
     const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
     const [videoFiles, setVideoFiles] = useState<any[]>([]);
+    const [labelTypes, setLabelTypes] = useState<LabelType[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time (absolute)
     const [videoDimensions, setVideoDimensions] = useState({
         naturalWidth: 0,
@@ -26,6 +27,9 @@ const VideoPlayer: React.FC = () => {
     const playerRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
+        getBackendPromise('/api/label-types').then(response => {
+            setLabelTypes(response.data);
+        })
         getBackendPromise('/api/video-files').then(response => {
             const videoFiles = response.data;
             setVideoFiles(videoFiles); // Store video files
@@ -232,7 +236,7 @@ const VideoPlayer: React.FC = () => {
                 </div>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}> {/* Flex grid for items */}
                     {boxes.sort((a, b) => a.start - b.start).map(box => (
-                        <SidebarItem key={box.id} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
+                        <SidebarItem key={box.id} labelTypes={labelTypes} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
                     ))}
                 </div>
             </div> {/* End of sidebar */}
