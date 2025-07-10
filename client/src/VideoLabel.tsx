@@ -8,12 +8,13 @@ import { Box } from './types';
 const BACKEND_URL = 'http://localhost:5050'; // Should be in an env file for production
 
 // Function to get from backend.
-const getBackendPromise = async (endpoint: string) => {
-    return axios.get(`${BACKEND_URL}${endpoint}`);
+const getBackendPromise = async (endpoint: string, id?: number) => {
+    return axios.get(`${BACKEND_URL}${endpoint}${id ? `/${id}` : ''}`);
 };
 
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
+    const [currentVideoId, setCurrentVideoId] = useState<number>(1); // Set current ID to 1
     const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time (absolute)
     const [videoDimensions, setVideoDimensions] = useState({
         naturalWidth: 0,
@@ -24,8 +25,15 @@ const VideoPlayer: React.FC = () => {
     const playerRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
-        getBackendPromise('/api/labels').then(response => {
-            setBoxes(response.data);  // Get labeled boxes data
+        getBackendPromise('/api/video-files').then(response => {
+            const videoFiles = response.data;
+            if (videoFiles.length > 0) {
+                setCurrentVideoId(videoFiles[0][0]); // Set current ID to the first video's ID
+            }
+        });
+
+        getBackendPromise('/api/labels', 1).then(response => {
+            setBoxes(response.data);  // Get labeled boxes data for the current video
         });
     }, []);
 
@@ -81,12 +89,12 @@ const VideoPlayer: React.FC = () => {
 
     const handleDeleteBox = (boxId: string) => {
         setBoxes(boxes.filter(box => box.id !== boxId));
-        axios.delete(`${BACKEND_URL}/api/delete-label/${boxId}`); // Assuming a DELETE endpoint for deleting
+        axios.delete(`${BACKEND_URL}/api/delete-label/${currentVideoId}/${boxId}`); // Assuming a DELETE endpoint for deleting
     };
 
     const handleUpdateBox = (updatedBox: Box) => {
         setBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
-        axios.put(`${BACKEND_URL}/api/update-label/${updatedBox.id}`, updatedBox); // Assuming a PUT endpoint for updating
+        axios.put(`${BACKEND_URL}/api/update-label/${currentVideoId}/${updatedBox.id}`, updatedBox); // Assuming a PUT endpoint for updating
     };
 
     const addBox = () => {
@@ -101,7 +109,7 @@ const VideoPlayer: React.FC = () => {
             height: 100,
         };
         setBoxes([...boxes, newBox]);
-        axios.post(`${BACKEND_URL}/api/add-label`, newBox);  // Save new label on the server
+        axios.post(`${BACKEND_URL}/api/add-label/${currentVideoId}`, newBox);  // Save new label on the server
     };
 
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
@@ -117,7 +125,7 @@ const VideoPlayer: React.FC = () => {
                 {/* Video Player */}
                 <video
                     ref={playerRef}
-                    src={`${BACKEND_URL}/api/video`} // Use the new endpoint
+                    src={`${BACKEND_URL}/api/video/${currentVideoId}`} // Use the new endpoint
                     controls
                     autoPlay
                     onTimeUpdate={handleTimeUpdate}

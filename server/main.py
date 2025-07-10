@@ -27,13 +27,13 @@ def _save_labels(labels):
         json.dump(labels, f)
 
 
-@app.route("/api/labels", methods=["GET"])
-def get_labels():
+@app.route("/api/labels/<string:model_id>", methods=["GET"])
+def get_labels(model_id):
     return jsonify(_load_labels())
 
 
-@app.route("/api/add-label", methods=["POST"])
-def add_label():
+@app.route("/api/add-label/<string:model_id>", methods=["POST"])
+def add_label(model_id):
     new_label = request.json
     labels = _load_labels()
     labels.append(new_label)
@@ -41,8 +41,8 @@ def add_label():
     return jsonify({"status": "success", "label": new_label}), 201
 
 
-@app.route("/api/update-label/<string:box_id>", methods=["PUT"])
-def update_label(box_id):
+@app.route("/api/update-label/<string:model_id>/<string:box_id>", methods=["PUT"])
+def update_label(model_id, box_id):
     updated_label_data = request.json
     labels = _load_labels()
     for idx, label in enumerate(labels):
@@ -57,8 +57,8 @@ def update_label(box_id):
     return jsonify({"status": "error", "message": f"Label with id {box_id} not found"}), 404
 
 
-@app.route("/api/delete-label/<string:box_id>", methods=["DELETE"])
-def delete_label(box_id):
+@app.route("/api/delete-label/<string:model_id>/<string:box_id>", methods=["DELETE"])
+def delete_label(model_id, box_id):
     labels = _load_labels()
     initial_count = len(labels)
     labels = [label for label in labels if label["id"] != box_id]
@@ -69,8 +69,8 @@ def delete_label(box_id):
         return jsonify({"status": "error", "message": f"Label with id {box_id} not found"}), 404
 
 
-@app.route("/api/video", methods=["GET"])
-def stream_video():
+@app.route("/api/video/<string:model_id>", methods=["GET"])
+def stream_video(model_id):
     file_size = os.path.getsize(VIDEO_PATH)
 
     # Get the range from the request headers (e.g., "bytes=0-1023")
@@ -104,6 +104,14 @@ def stream_video():
 
     return flask.Response(data, mimetype="video/mp4")
 
+
+# Function to get a list of video files with their IDs
+def _get_video_files():
+    return [[1, "video.mkv"]]
+
+@app.route("/api/video-files", methods=["GET"])
+def get_video_files():
+    return jsonify(_get_video_files())
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5050)
