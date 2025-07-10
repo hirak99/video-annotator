@@ -3,6 +3,7 @@ import ResizeObserver from 'resize-observer-polyfill';
 import axios from 'axios';
 import SidebarItem from './SidebarItem';
 import { Box, LabelType } from './types';
+import Boxes from './Boxes';
 
 // Backend URL.
 const BACKEND_URL = 'http://localhost:5050'; // Should be in an env file for production
@@ -110,29 +111,7 @@ const VideoPlayer: React.FC = () => {
         }
 
         setLabelError(error);
-
-
     }, [boxes, labelTypes]);
-
-
-    // Simple string hashing function to generate a number
-    const stringToHash = (str: string): number => {
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32bit integer
-        }
-        return Math.abs(hash);
-    };
-
-    // Convert hash to HSL color string
-    const hashToHSLColor = (hash: number): string => {
-        const hue = hash % 360; // Hue is between 0 and 359
-        const saturation = 70; // Keep saturation constant for vibrant colors
-        const lightness = 50; // Keep lightness constant
-        return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-    };
 
     const handleDeleteBox = (boxId: string) => {
         setBoxes(boxes.filter(box => box.id !== boxId));
@@ -159,13 +138,6 @@ const VideoPlayer: React.FC = () => {
         axios.post(`${BACKEND_URL}/api/add-label/${currentVideoIdx}`, newBox);  // Save new label on the server
     };
 
-    const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
-        const target = event.target as HTMLElement;
-        const rect = target.getBoundingClientRect();
-        return event.clientX >= rect.right - 10 && event.clientY >= rect.bottom - 10;
-    };
-
-
     return (
         <div>
             {/* List of videos */}
@@ -189,84 +161,13 @@ const VideoPlayer: React.FC = () => {
                     />
 
                     {/* Label Boxes */}
-                    <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}> {/* Box container */}
-                        {boxes
-                            .filter(box => currentTime >= box.start && currentTime <= box.end)
-                            .map((box) => (
-
-                                <div
-                                    key={box.id}
-                                    data-box-id={box.id}
-                                    style={{
-                                        position: 'absolute', // Positions relative to the box container
-                                        top: `${(box.y / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
-                                        left: `${(box.x / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
-                                        width: `${(box.width / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
-                                        height: `${(box.height / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
-                                        border: `2px solid ${hashToHSLColor(stringToHash(box.name))}`,
-                                        background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
-                                        pointerEvents: 'auto', // Allow pointer events on the individual boxes
-                                    }}
-                                    onMouseDown={(event) => {
-                                        event.stopPropagation();
-                                        const boxRef = event.currentTarget;
-                                        const boxId = boxRef.getAttribute('data-box-id');
-                                        let box = boxes.find(b => b.id === boxId);
-                                        if (box) {
-                                            const startX = event.clientX;
-                                            const startY = event.clientY;
-                                            const initialX = box.x;
-                                            const initialY = box.y;
-                                            const initialWidth = box.width;
-                                            const initialHeight = box.height;
-
-                                            const scaleFactor = videoDimensions.naturalWidth / videoDimensions.displayWidth;
-
-                                            const isBottomRight = isEventAtBottomRight(event);
-
-                                            const handleMouseMove = (event: MouseEvent) => {
-                                                const deltaX = event.clientX - startX;
-                                                const deltaY = event.clientY - startY;
-                                                const newX = initialX + deltaX * scaleFactor;
-                                                const newY = initialY + deltaY * scaleFactor;
-                                                const newWidth = initialWidth + deltaX * scaleFactor;
-                                                const newHeight = initialHeight + deltaY * scaleFactor;
-
-                                                if (isBottomRight) {
-                                                    box = { ...box!, width: newWidth, height: newHeight };
-                                                } else {
-                                                    box = { ...box!, x: newX, y: newY };
-                                                }
-                                                setBoxes(boxes.map(b => b.id === boxId ? box! : b));
-                                            };
-
-                                            const handleMouseUp = () => {
-                                                document.removeEventListener('mousemove', handleMouseMove);
-                                                document.removeEventListener('mouseup', handleMouseUp);
-                                                handleUpdateBox(box!);
-                                            };
-
-                                            document.addEventListener('mousemove', handleMouseMove);
-                                            document.addEventListener('mouseup', handleMouseUp);
-                                        }
-                                    }}
-                                    onMouseMove={(event) => {
-                                        const boxRef = event.currentTarget;
-                                        const boxId = boxRef.getAttribute('data-box-id');
-                                        const box = boxes.find(b => b.id === boxId);
-                                        if (box) {
-                                            if (isEventAtBottomRight(event)) {
-                                                boxRef.style.cursor = 'se-resize';
-                                            } else {
-                                                boxRef.style.cursor = 'move';
-                                            }
-                                        }
-                                    }}
-                                >
-                                    {box.name}
-                                </div>
-                            ))}
-                    </div>
+                    <Boxes
+                        boxes={boxes}
+                        currentTime={currentTime}
+                        videoDimensions={videoDimensions}
+                        handleUpdateBox={handleUpdateBox}
+                        setBoxes={setBoxes}
+                    />
                 </div> {/* End of video/box wrapper */}
 
                 {/* Sidebar */}
@@ -288,7 +189,6 @@ const VideoPlayer: React.FC = () => {
                         ))}
                     </div>
                 </div> {/* End of sidebar */}
-
             </div>
         </div>
     );
