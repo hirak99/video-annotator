@@ -167,7 +167,12 @@ def add_common_endpoints(
 
     @app.route("/api/video-files", methods=["GET"])
     def get_video_files():
-        return jsonify(video_files)
+        # Return video files without the path.
+        without_path: list[_VideoFile] = []
+        for video in video_files:
+            without_path.append(video.copy())
+            without_path[-1]["video_file"] = os.path.basename(video["video_file"])
+        return jsonify(without_path)
 
     @app.route("/api/label-types", methods=["GET"])
     def get_label_types():
