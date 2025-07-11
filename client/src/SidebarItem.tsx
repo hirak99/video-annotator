@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 import { Box, LabelType } from './types';
 
 const formatTime = (seconds: number): string => {
@@ -8,6 +7,7 @@ const formatTime = (seconds: number): string => {
 };
 
 interface SidebarItemProps {
+    index: number;
     labelTypes: LabelType[];
     box: Box;
     onUpdateBox: (updatedBox: Box) => void;
@@ -15,7 +15,7 @@ interface SidebarItemProps {
     currentTime: number; // Add currentTime prop
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox, onDeleteBox, currentTime }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({ index, labelTypes, box, onUpdateBox, onDeleteBox, currentTime }) => {
 
     const handleSetStart = () => {
         // If the start is less than end, set newEndTime to start + 1.
@@ -29,7 +29,10 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
 
 
     return (
-        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: '1fr 90px 10px 90px 30px', gap: '0', alignItems: 'center' }}>
+        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: 'min-content 1fr 90px 10px 90px 30px', gap: '0', alignItems: 'center' }}>
+            {/* Index */}
+            <div style={{marginRight: '5px'}}>{index + 1}.</div>
+
             {/* Box Name */}
             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                 <select

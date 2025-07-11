@@ -192,11 +192,28 @@ const VideoPlayer: React.FC = () => {
                         </div>
                     )}
 
+                    {/* List of all the annotations. */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}> {/* Flex grid for items */}
-                        {boxes.sort((a, b) => a.start - b.start).map(box => (
-                            <SidebarItem key={box.id} labelTypes={labelTypes} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
+                        {boxes.map((box, index) => (
+                            <SidebarItem index={index} key={box.id} labelTypes={labelTypes} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
                         ))}
                     </div>
+
+                    {/* Sort button */}
+                    <button
+                        style={{ margin: '5px 0 0 auto', display: 'block' }}
+                        onClick={() => {
+                            setBoxes(prevBoxes =>
+                                [...prevBoxes].sort((a, b) => {
+                                    if (a.name < b.name) return -1;
+                                    if (a.name > b.name) return 1;
+                                    return a.start - b.start;
+                                })
+                            );
+                        }}
+                    >
+                        Sort
+                    </button>
                 </div> {/* End of sidebar */}
             </div>
         </div>
