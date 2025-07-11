@@ -3,11 +3,11 @@
 
 labels:
   - name: (unknown)
-    overlap: true
+    allow_overlap: true
   - name: blur
-    overlap: true
+    allow_overlap: true
   - name: object_no_1
-    overlap: false
+    allow_overlap: false
 
 videos:
   - video_file: "video.mkv"

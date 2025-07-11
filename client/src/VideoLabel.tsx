@@ -98,7 +98,7 @@ const VideoPlayer: React.FC = () => {
             const intervals = overlappingLabels[labelName].sort((a, b) => a.start - b.start);
             for (let i = 0; i < intervals.length - 1; i++) {
                 if (intervals[i].end > intervals[i + 1].start) {
-                    overlappingLabelNames.push(labelName);
+                    overlappingLabelNames.push(`${labelName} (at ${intervals[i].end})`);
                     break;
                 }
             }
@@ -107,7 +107,7 @@ const VideoPlayer: React.FC = () => {
         // Generate an error of the form "Following labels do not allow overlap: 'person1', 'person2'. Please remove any overlap in time."
         let error = "";
         if (overlappingLabelNames.length > 0) {
-            error = `Following labels do not allow overlap: '${overlappingLabelNames.join("', '")}'. Please ensure that there is no overlap at any time.`;
+            error = `Overlap not allowed for label types: '${overlappingLabelNames.join("', '")}'. Please edit to remove overlap.`;
         }
 
         setLabelError(error);
