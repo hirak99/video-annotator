@@ -5,8 +5,8 @@ import SidebarItem from './SidebarItem';
 import { Box, LabelType } from './types';
 import LabelRenderer from './LabelRenderer';
 
-// Backend URL.
-const BACKEND_URL = 'http://localhost:5050'; // Should be in an env file for production
+// Backend URL. E.g. 'http://localhost:8002'.
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
 
 // Function to get from backend.
 const getBackendPromise = async (endpoint: string, id?: number) => {

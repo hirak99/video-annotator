@@ -4,4 +4,4 @@ set -uexo pipefail
 
 cd client/
 
-PORT=8060 npm start
+REACT_APP_BACKEND_URL='http://localhost:5050' PORT=6050 npm start

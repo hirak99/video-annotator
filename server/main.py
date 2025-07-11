@@ -177,4 +177,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     main_app = MainApp(config_file=args.config)
-    main_app.app.run(debug=True, host="0.0.0.0", port=5050)
+    port = int(os.getenv("PORT", 8080))
+    main_app.app.run(debug=True, host="0.0.0.0", port=port)
