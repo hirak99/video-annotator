@@ -83,9 +83,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
 
 
     return (
-        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: '120px 60px 60px 1fr', gap: '10px', alignItems: 'center' }}>
+        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: '1fr 30px 60px 10px 60px 30px 30px', gap: '0', alignItems: 'center' }}>
             {/* Box Name */}
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                 {isEditingName ? (
                     <select
                         key={box.id}
@@ -104,11 +104,27 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
                         ))}
                     </select>
                 ) : (
-                    <strong onClick={handleNameClick} style={{ cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' }}>
+                    <strong onClick={handleNameClick} style={{
+                        /* cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' */
+                        cursor: 'pointer',
+                        background: '#eee',
+                        padding: '2px 5px',
+                        borderRadius: '3px',
+                        display: 'block',   // Make it a block element
+                        width: '100%',      // Ensure it takes up all available space
+                        textAlign: 'left',  // You can adjust this to 'center' or 'right' if you want
+                    }}>
                         {box.name}
                     </strong>
                 )}
             </div>
+
+            <button onClick={handleSetStart} style={{
+                padding: '2px 5px', fontSize: '14px',
+                border: 'none',
+                outline: 'none',
+                marginLeft: 'auto',
+            }} aria-label="Set Start Time">⇤</button> {/* Using a play icon */}
 
             {/* Start Time */}
             <div>
@@ -129,6 +145,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
                 )}
             </div>
 
+            <div></div>
+
             {/* End Time */}
             <div>
                 {isEditingEnd ? (
@@ -147,13 +165,16 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
                     </span>
                 )}
             </div>
+            <button onClick={handleSetEnd} style={{
+                padding: '2px 5px',
+                border: 'none',
+                outline: 'none',
+                marginRight: 'auto',
+
+            }} aria-label="Set End Time">⇥</button> {/* Using a stop icon */}
 
             {/* Buttons */}
-            <div style={{ display: 'flex', gap: '5px' }}>
-                <button onClick={handleSetStart} style={{ padding: '2px 5px' }} aria-label="Set Start Time">◁</button> {/* Using a play icon */}
-                <button onClick={handleSetEnd} style={{ padding: '2px 5px' }} aria-label="Set End Time">▷</button> {/* Using a stop icon */}
-                <button onClick={() => onDeleteBox(box.id)} style={{ padding: '2px 5px', color: 'red' }} aria-label="Delete Box">✖</button> {/* Using a cross icon */}
-            </div>
+            <button onClick={() => onDeleteBox(box.id)} style={{ padding: '2px 5px', color: 'red' }} aria-label="Delete Box">✖</button> {/* Using a cross icon */}
         </div>
     );
 };

@@ -172,8 +172,16 @@ const VideoPlayer: React.FC = () => {
 
                 {/* Sidebar */}
                 <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
-                    <div style={{ paddingBottom: '10px', borderBottom: '1px solid #eee', marginBottom: '10px' }}>
-                        <span>ROIs</span> <button onClick={addBox} style={{ marginTop: '10px' }}>Add</button>
+                    <div style={{
+                        paddingBottom: '10px',
+                        borderBottom: '1px solid #eee',
+                        marginBottom: '10px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                    }}>
+                        <span>Regions of Interest</span>
+                        <button onClick={addBox} style={{ marginTop: '10px' }}>Add</button>
                     </div>
 
                     {/* Div to show labelError and hidden if error is empty */}
