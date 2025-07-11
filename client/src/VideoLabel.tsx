@@ -26,7 +26,14 @@ const VideoPlayer: React.FC = () => {
         displayWidth: 0,
         displayHeight: 0
     });
+    const [saving, setSaving] = useState(false);
     const playerRef = useRef<HTMLVideoElement>(null);
+
+    // Helper to show "Saving..." during any label save operation
+    const withSaving = <T,>(promise: Promise<T>) => {
+        setSaving(true);
+        return promise.finally(() => setSaving(false));
+    };
 
     useEffect(() => {
         getBackendPromise('/api/label-types').then(response => {
@@ -115,12 +122,16 @@ const VideoPlayer: React.FC = () => {
 
     const handleDeleteBox = (boxId: string) => {
         setBoxes(boxes.filter(box => box.id !== boxId));
-        axios.delete(`${BACKEND_URL}/api/delete-label/${currentVideoIdx}/${boxId}`); // Assuming a DELETE endpoint for deleting
+        withSaving(
+            axios.delete(`${BACKEND_URL}/api/delete-label/${currentVideoIdx}/${boxId}`)
+        );
     };
 
     const handleUpdateBox = (updatedBox: Box) => {
         setBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
-        axios.put(`${BACKEND_URL}/api/update-label/${currentVideoIdx}/${updatedBox.id}`, updatedBox); // Assuming a PUT endpoint for updating
+        withSaving(
+            axios.put(`${BACKEND_URL}/api/update-label/${currentVideoIdx}/${updatedBox.id}`, updatedBox)
+        );
     };
 
     const addBox = () => {
@@ -136,7 +147,9 @@ const VideoPlayer: React.FC = () => {
             height: 100,
         };
         setBoxes([...boxes, newBox]);
-        axios.post(`${BACKEND_URL}/api/add-label/${currentVideoIdx}`, newBox);  // Save new label on the server
+        withSaving(
+            axios.post(`${BACKEND_URL}/api/add-label/${currentVideoIdx}`, newBox)
+        );
     };
 
     return (
@@ -160,6 +173,12 @@ const VideoPlayer: React.FC = () => {
                         onLoadedMetadata={handleVideoLoad}
                         style={{ width: '100%', backgroundColor: 'black' }}
                     />
+
+                    {saving &&
+                        <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+                            Saving...
+                        </div>
+                    }
 
                     {/* Label Boxes */}
                     <LabelRenderer
