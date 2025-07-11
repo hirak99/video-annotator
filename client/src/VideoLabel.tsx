@@ -126,7 +126,8 @@ const VideoPlayer: React.FC = () => {
     const addBox = () => {
         const newBox = {
             id: Date.now().toString(),
-            name: '(Unnamed)',
+            // First of the labelTypes.
+            name: labelTypes[0].name,
             start: currentTime,
             end: currentTime + 10, // Assuming a default duration for a new box
             x: 50,

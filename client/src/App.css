@@ -1,11 +1,11 @@
 /* Define a nice style for select with class "video-select" */
 .video-select {
   width: 100%;
-  border: 1px solid #111;
+  border: 0px solid #555;
   border-radius: 4px;
-  background-color: #282c34;
+  background-color: #aaa;
   font-size: 16px;
-  color: white;
+  color: #111;
   cursor: pointer;
   appearance: none; /* Remove default browser styling */
   -webkit-appearance: none;
@@ -16,11 +16,13 @@
   background-size: 8px 10px;
 }
 
+/*
 .video-select:focus {
   border-color: #007bff;
   outline: none;
   box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
+*/
 
 .video-select option {
   padding: 8px 10px;
