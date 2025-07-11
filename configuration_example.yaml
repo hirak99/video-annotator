@@ -1,9 +1,12 @@
+# Example configuration. You can copy this to your config, and use --config to
+# point to it.
+
 labels:
   - name: (unknown)
     overlap: true
   - name: blur
     overlap: true
-  - name: roi1
+  - name: object_no_1
     overlap: false
 
 videos:
