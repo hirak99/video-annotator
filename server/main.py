@@ -1,6 +1,8 @@
 import argparse
 import json
+import logging
 import os
+import subprocess
 from typing import TypedDict
 
 import flask
@@ -8,6 +10,9 @@ from flask import jsonify
 from flask import request
 import flask_cors
 import yaml
+
+# Convert mkv to mp4 here.
+_TEMP_DIR = "_temp_movie_cache"
 
 
 class _LabelProperties(TypedDict):
@@ -22,6 +27,60 @@ class _VideoFile(TypedDict):
 
 # Unused functions for flask endpoints.
 # pyright: reportUnusedFunction=false
+
+
+def _repack_to_mp4(mkv_file: str) -> str:
+    temp_mp4 = os.path.join(_TEMP_DIR, os.path.basename(mkv_file) + ".mp4")
+    if not os.path.exists(temp_mp4):  # Avoid repacking if already done
+        subprocess.run(
+            [
+                "ffmpeg",
+                "-y",
+                "-i",
+                mkv_file,
+                "-c",
+                "copy",
+                "-movflags",
+                "+faststart",
+                temp_mp4,
+            ]
+        )
+    return temp_mp4
+
+
+def _stream_video(video_path: str, request: flask.Request):
+    video_file = os.path.getsize(video_path)
+
+    # Get the range from the request headers (e.g., "bytes=0-1023")
+    range_header = request.headers.get("Range", None)
+
+    if range_header:
+        # Parse the Range header
+        byte1, byte2 = range_header.strip().replace("bytes=", "").split("-")
+        byte1 = int(byte1)
+        byte2 = byte2 and int(byte2) or video_file - 1
+
+        # Set the content range and content length headers for partial content
+        content_range = f"bytes {byte1}-{byte2}/{video_file}"
+        content_length = byte2 - byte1 + 1
+
+        # Open the file and read the requested range
+        with open(video_path, "rb") as video_file:
+            video_file.seek(byte1)
+            data = video_file.read(content_length)
+
+        # Return the chunked video data as a 206 Partial Content response
+        response = flask.Response(
+            data, status=206, mimetype="video/mp4", content_type="video/mp4"
+        )
+        response.headers["Content-Range"] = content_range
+        return response
+
+    # If no range is provided, send the whole video
+    with open(video_path, "rb") as video_file:
+        data = video_file.read()
+
+    return flask.Response(data, mimetype="video/mp4")
 
 
 def add_common_endpoints(
@@ -93,54 +152,6 @@ def add_common_endpoints(
                 404,
             )
 
-    @app.route("/api/video/<int:video_id>", methods=["GET"])
-    def stream_video(video_id):
-        video = video_files[video_id]
-        if not video:
-            return (
-                jsonify(
-                    {
-                        "status": "error",
-                        "message": f"Video with id {video_id} not found",
-                    }
-                ),
-                404,
-            )
-
-        video_path = video["video_file"]
-        file_size = os.path.getsize(video_path)
-
-        # Get the range from the request headers (e.g., "bytes=0-1023")
-        range_header = request.headers.get("Range", None)
-
-        if range_header:
-            # Parse the Range header
-            byte1, byte2 = range_header.strip().replace("bytes=", "").split("-")
-            byte1 = int(byte1)
-            byte2 = byte2 and int(byte2) or file_size - 1
-
-            # Set the content range and content length headers for partial content
-            content_range = f"bytes {byte1}-{byte2}/{file_size}"
-            content_length = byte2 - byte1 + 1
-
-            # Open the file and read the requested range
-            with open(video_path, "rb") as video_file:
-                video_file.seek(byte1)
-                data = video_file.read(content_length)
-
-            # Return the chunked video data as a 206 Partial Content response
-            response = flask.Response(
-                data, status=206, mimetype="video/mp4", content_type="video/mp4"
-            )
-            response.headers["Content-Range"] = content_range
-            return response
-
-        # If no range is provided, send the whole video
-        with open(video_path, "rb") as video_file:
-            data = video_file.read()
-
-        return flask.Response(data, mimetype="video/mp4")
-
     @app.route("/api/video-files", methods=["GET"])
     def get_video_files():
         return jsonify(video_files)
@@ -165,8 +176,48 @@ class MainApp:
 
         add_common_endpoints(self.app, video_files=video_files, label_types=label_types)
 
+        self._repacked_original_fname: str = ""
+        self._repacked_fname: str = ""
+
+        @self.app.route("/api/video/<int:video_id>", methods=["GET"])
+        def stream_video(video_id):
+            video = video_files[video_id]
+            if not video:
+                return (
+                    jsonify(
+                        {
+                            "status": "error",
+                            "message": f"Video with id {video_id} not found",
+                        }
+                    ),
+                    404,
+                )
+            video_file = video["video_file"]
+            return _stream_video(self._repack_video(video_file), request=request)
+
+    def _repack_video(self, video_file: str) -> str:
+        if video_file.endswith(".mp4"):
+            return video_file
+
+        if not os.path.exists(_TEMP_DIR):
+            os.makedirs(_TEMP_DIR)
+        if video_file != self._repacked_original_fname:
+            self._repacked_fname = _repack_to_mp4(video_file)
+            self._repacked_original_fname = video_file
+        return self._repacked_fname
+
+    def __del__(self):
+        """Remove temporary files after request."""
+        for file_name in os.listdir(_TEMP_DIR):
+            file_path = os.path.join(_TEMP_DIR, file_name)
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                logging.info(f"Deleted temporary file: {file_path}")
+
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
+
     parser = argparse.ArgumentParser(description="Video Labeling Server")
     parser.add_argument(
         "-c",
