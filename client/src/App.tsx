@@ -1,12 +1,17 @@
 import './App.css';
 import './VideoLabel.tsx'
 import VideoPlayer from './VideoLabel';
+import Login from './Login';
+import { BrowserRouter as Router, Routes, Route } from 'react-router';
 
 function App() {
     return (
-        <div className="App">
-            <VideoPlayer />
-        </div>
+        <Router>
+            <Routes>
+                <Route path="/" element={<Login />} />
+                <Route path="/app" element={<VideoPlayer />} />
+            </Routes>
+        </Router>
     );
 }
 

@@ -4,6 +4,10 @@ import axios from 'axios';
 import SidebarItem from './SidebarItem';
 import { Box, LabelType } from './types';
 import LabelRenderer from './LabelRenderer';
+import { useNavigate } from 'react-router';
+
+axios.defaults.withCredentials = true;
+
 
 // Backend URL. E.g. 'http://localhost:8002'.
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
@@ -30,6 +34,7 @@ const VideoPlayer: React.FC = () => {
     const [savingCount, setSavingCount] = useState(0);
     const saving = savingCount > 0;
     const playerRef = useRef<HTMLVideoElement>(null);
+    const navigate = useNavigate();
 
     // Helper to show "Saving..." during any label save operation (supports multiple concurrent ops)
     const withSaving = <T,>(promise: Promise<T>) => {
@@ -45,12 +50,16 @@ const VideoPlayer: React.FC = () => {
         })
         getBackendPromise('/api/video-files').then(response => {
             const videoFiles = response.data;
+            console.log(videoFiles);
+            if (videoFiles["needs_login"]) {
+                navigate("/");
+            }
             setVideoFiles(videoFiles); // Store video files
             if (videoFiles.length > 0) {
                 setCurrentVideoIdx(0);
             }
         });
-    }, []);
+    }, [navigate]);
 
     useEffect(() => {
         getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
@@ -174,6 +183,9 @@ const VideoPlayer: React.FC = () => {
 
     return (
         <div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <button onClick={() => { navigate("/"); }}>Logout</button>
+            </div>
             {/* List of videos */}
             <select className="video-select" value={currentVideoIdx} onChange={(e) => setCurrentVideoIdx(Number(e.target.value))}>
                 {videoFiles.map((file, index) => (

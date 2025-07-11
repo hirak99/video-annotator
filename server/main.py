@@ -1,4 +1,5 @@
 import argparse
+import functools
 import json
 import logging
 import os
@@ -14,6 +15,11 @@ import yaml
 
 # Convert mkv to mp4 here.
 _TEMP_DIR = "_temp_movie_cache"
+
+
+class _User(TypedDict):
+    username: str
+    password: str
 
 
 class _LabelProperties(TypedDict):
@@ -95,6 +101,19 @@ def _stream_video(video_path: str, request: flask.Request):
     return flask.Response(data, mimetype="video/mp4")
 
 
+def _login_required(f):
+    @functools.wraps(f)
+    def decorated_function(*args, **kwargs):
+        if "username" not in flask.session:  # Check if the user is logged in
+            return {"needs_login": True}
+            return flask.redirect(
+                flask.url_for("login")
+            )  # Redirect to login page if not logged in
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
 def add_common_endpoints(
     app: flask.Flask, video_files: list[_VideoFile], label_types: list[_LabelProperties]
 ):
@@ -114,10 +133,12 @@ def add_common_endpoints(
             json.dump(labels, f)
 
     @app.route("/api/labels/<int:video_id>", methods=["GET"])
+    @_login_required
     def get_labels(video_id):
         return jsonify(_load_labels(video_id))
 
     @app.route("/api/add-label/<int:video_id>", methods=["POST"])
+    @_login_required
     def add_label(video_id: int):
         new_label: _Label = typing.cast(_Label, request.json)
         labels = _load_labels(video_id)
@@ -126,6 +147,7 @@ def add_common_endpoints(
         return jsonify({"status": "success", "label": new_label}), 201
 
     @app.route("/api/update-label/<int:video_id>/<string:label_id>", methods=["PUT"])
+    @_login_required
     def update_label(video_id: int, label_id: str):
         updated_label_data = typing.cast(_Label, request.json)
         labels = _load_labels(video_id)
@@ -148,6 +170,7 @@ def add_common_endpoints(
         )
 
     @app.route("/api/delete-label/<int:video_id>/<string:label_id>", methods=["DELETE"])
+    @_login_required
     def delete_label(video_id, label_id):
         labels = _load_labels(video_id)
         initial_count = len(labels)
@@ -160,12 +183,16 @@ def add_common_endpoints(
         else:
             return (
                 jsonify(
-                    {"status": "error", "message": f"Label with id {label_id} not found"}
+                    {
+                        "status": "error",
+                        "message": f"Label with id {label_id} not found",
+                    }
                 ),
                 404,
             )
 
     @app.route("/api/video-files", methods=["GET"])
+    @_login_required
     def get_video_files():
         # Return video files without the path.
         without_path: list[_VideoFile] = []
@@ -183,7 +210,9 @@ class MainApp:
     def __init__(self, config_file: str):
         self.app: flask.Flask = flask.Flask(__name__)
         # Enable CORS for frontend to communicate with the backend.
-        flask_cors.CORS(self.app)
+        flask_cors.CORS(self.app, supports_credentials=True)
+        # Add a secret key which is mandatory for using flask.session for session management.
+        self.app.secret_key = "vO2hlWdvaKzL0smYUCrQtGgggzxA7paw"
 
         # Load video files from YAML.
         with open(config_file, "r") as f:
@@ -198,6 +227,7 @@ class MainApp:
         self._repacked_fname: str = ""
 
         @self.app.route("/api/video/<int:video_id>", methods=["GET"])
+        @_login_required
         def stream_video(video_id):
             video = video_files[video_id]
             if not video:
@@ -212,6 +242,34 @@ class MainApp:
                 )
             video_file = video["video_file"]
             return _stream_video(self._repack_video(video_file), request=request)
+
+        # @self.app.before_request
+        # def clear_login_on_reload():
+        #     flask.session.clear()
+
+        @self.app.route("/logout", methods=["POST"])
+        def logout():
+            flask.session.clear()
+            logging.info("Logged out.")
+            return jsonify({"status": "success"})
+
+        @self.app.route("/login", methods=["POST"])
+        def login():
+            username = request.json.get("username")  # type: ignore
+            password = request.json.get("password")  # type: ignore
+            users: list[_User] = config["users"]
+            logging.info(flask.session)
+            flask.session.clear()
+            for user in users:
+                if user["username"] == username and user["password"] == password:
+                    flask.session["username"] = username
+                    logging.info(flask.session)
+                    return jsonify({"status": "success"})
+            else:
+                return (
+                    jsonify({"status": "error", "message": "Invalid credentials"}),
+                    401,
+                )
 
     def _repack_video(self, video_file: str) -> str:
         if video_file.endswith(".mp4"):
