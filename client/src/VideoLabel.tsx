@@ -26,13 +26,17 @@ const VideoPlayer: React.FC = () => {
         displayWidth: 0,
         displayHeight: 0
     });
-    const [saving, setSaving] = useState(false);
+    // Number of time any label update method was posted to backend. If this is not 0, backend is working to save.
+    const [savingCount, setSavingCount] = useState(0);
+    const saving = savingCount > 0;
     const playerRef = useRef<HTMLVideoElement>(null);
 
-    // Helper to show "Saving..." during any label save operation
+    // Helper to show "Saving..." during any label save operation (supports multiple concurrent ops)
     const withSaving = <T,>(promise: Promise<T>) => {
-        setSaving(true);
-        return promise.finally(() => setSaving(false));
+        setSavingCount(count => count + 1);
+        return promise.finally(() => {
+            setSavingCount(count => Math.max(0, count - 1));
+        });
     };
 
     useEffect(() => {
@@ -151,6 +155,22 @@ const VideoPlayer: React.FC = () => {
             axios.post(`${BACKEND_URL}/api/add-label/${currentVideoIdx}`, newBox)
         );
     };
+
+    // Prevent window close/navigation if saving is true
+    React.useEffect(() => {
+        const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+            e.preventDefault();
+        };
+        if (saving) {
+            window.addEventListener('beforeunload', handleBeforeUnload);
+        } else {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        }
+        // Cleanup on unmount
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [saving]);
 
     return (
         <div>
