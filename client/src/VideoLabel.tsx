@@ -240,7 +240,7 @@ const VideoPlayer: React.FC = () => {
 
                     {/* Sort button */}
                     <button
-                        style={{ margin: '5px 0 0 auto', display: 'block' }}
+                        style={{ margin: '10px 0 0 auto', display: 'block' }}
                         onClick={() => {
                             setBoxes(prevBoxes =>
                                 [...prevBoxes].sort((a, b) => {

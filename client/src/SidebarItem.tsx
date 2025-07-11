@@ -29,9 +29,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ index, labelTypes, box, onUpd
 
 
     return (
-        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: 'min-content 1fr 90px 10px 90px 30px', gap: '0', alignItems: 'center' }}>
+        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: 'min-content 1fr 90px 90px 30px', gap: '5px', alignItems: 'center' }}>
             {/* Index */}
-            <div style={{marginRight: '5px'}}>{index + 1}.</div>
+            <div>{index + 1}.</div>
 
             {/* Box Name */}
             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
@@ -41,7 +41,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ index, labelTypes, box, onUpd
                     onChange={(event) => {
                         onUpdateBox({ ...box, name: event.target.value });
                     }}
-                    style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
+                    style={{ width: '100%', padding: '2px' }}
                 >
                     {labelTypes.map((labelType) => (
                         <option key={labelType.name} value={labelType.name}>
@@ -58,9 +58,6 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ index, labelTypes, box, onUpd
             }} aria-label="Set Start Time">
                 <span style={{ marginRight: '5px', position: 'relative', top: '-1px' }}>⧯</span> {formatTime(box.start)}
             </button>
-
-
-            <div></div>
 
             {/* End Time */}
             <button onClick={handleSetEnd} style={{

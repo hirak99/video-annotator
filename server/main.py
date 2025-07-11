@@ -3,6 +3,7 @@ import json
 import logging
 import os
 import subprocess
+import typing
 from typing import TypedDict
 
 import flask
@@ -23,6 +24,17 @@ class _LabelProperties(TypedDict):
 class _VideoFile(TypedDict):
     video_file: str
     label_file: str
+
+
+class _Label(TypedDict):
+    id: str
+    name: str
+    start: float
+    end: float
+    x: float
+    y: float
+    width: float
+    height: float
 
 
 # Unused functions for flask endpoints.
@@ -87,7 +99,7 @@ def add_common_endpoints(
     app: flask.Flask, video_files: list[_VideoFile], label_types: list[_LabelProperties]
 ):
     # Simple function to get labels from a JSON file
-    def _load_labels(video_id: int):
+    def _load_labels(video_id: int) -> list[_Label]:
         labels_file = video_files[video_id]["label_file"]
         if os.path.exists(labels_file):
             with open(labels_file, "r") as f:
@@ -95,7 +107,8 @@ def add_common_endpoints(
         return []
 
     # Simple function to save labels to a JSON file
-    def _save_labels(video_id: int, labels):
+    def _save_labels(video_id: int, labels: list[_Label]):
+        labels.sort(key=lambda x: (x["name"], x["start"]))
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
             json.dump(labels, f)
@@ -105,49 +118,49 @@ def add_common_endpoints(
         return jsonify(_load_labels(video_id))
 
     @app.route("/api/add-label/<int:video_id>", methods=["POST"])
-    def add_label(video_id):
-        new_label = request.json
+    def add_label(video_id: int):
+        new_label: _Label = typing.cast(_Label, request.json)
         labels = _load_labels(video_id)
         labels.append(new_label)
         _save_labels(video_id, labels)
         return jsonify({"status": "success", "label": new_label}), 201
 
-    @app.route("/api/update-label/<int:video_id>/<string:box_id>", methods=["PUT"])
-    def update_label(video_id, box_id):
-        updated_label_data = request.json
+    @app.route("/api/update-label/<int:video_id>/<string:label_id>", methods=["PUT"])
+    def update_label(video_id: int, label_id: str):
+        updated_label_data = typing.cast(_Label, request.json)
         labels = _load_labels(video_id)
         for idx, label in enumerate(labels):
-            if label["id"] == box_id:
+            if label["id"] == label_id:
                 # Update the existing label with the new data, keeping the original ID
                 label.update(updated_label_data)
                 label["id"] = (
-                    box_id  # Ensure ID is not changed if updated_label_data contains it
+                    label_id  # Ensure ID is not changed if updated_label_data contains it
                 )
                 labels[idx] = label  # Assign the updated label back to the list
                 _save_labels(video_id, labels)
                 return jsonify({"status": "success", "label": labels[idx]})
-        # If the box_id is not found
+        # If the label_id is not found
         return (
             jsonify(
-                {"status": "error", "message": f"Label with id {box_id} not found"}
+                {"status": "error", "message": f"Label with id {label_id} not found"}
             ),
             404,
         )
 
-    @app.route("/api/delete-label/<int:video_id>/<string:box_id>", methods=["DELETE"])
-    def delete_label(video_id, box_id):
+    @app.route("/api/delete-label/<int:video_id>/<string:label_id>", methods=["DELETE"])
+    def delete_label(video_id, label_id):
         labels = _load_labels(video_id)
         initial_count = len(labels)
-        labels = [label for label in labels if label["id"] != box_id]
+        labels = [label for label in labels if label["id"] != label_id]
         if len(labels) < initial_count:
             _save_labels(video_id, labels)
             return jsonify(
-                {"status": "success", "message": f"Label with id {box_id} deleted"}
+                {"status": "success", "message": f"Label with id {label_id} deleted"}
             )
         else:
             return (
                 jsonify(
-                    {"status": "error", "message": f"Label with id {box_id} not found"}
+                    {"status": "error", "message": f"Label with id {label_id} not found"}
                 ),
                 404,
             )
