@@ -16,11 +16,6 @@ interface SidebarItemProps {
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox, onDeleteBox, currentTime }) => {
-    const [isEditingName, setIsEditingName] = useState(false);
-
-    const handleNameClick = () => {
-        setIsEditingName(true);
-    };
 
     const handleSetStart = () => {
         // If the start is less than end, set newEndTime to start + 1.
@@ -37,37 +32,20 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ labelTypes, box, onUpdateBox,
         <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: '1fr 90px 10px 90px 30px', gap: '0', alignItems: 'center' }}>
             {/* Box Name */}
             <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
-                {isEditingName ? (
-                    <select
-                        key={box.id}
-                        value={box.name}
-                        onBlur={() => setIsEditingName(false)}
-                        onChange={(event) => {
-                            onUpdateBox({ ...box, name: event.target.value });
-                            setIsEditingName(false);
-                        }}
-                        style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
-                    >
-                        {labelTypes.map((labelType) => (
-                            <option>
-                                {labelType.name}
-                            </option>
-                        ))}
-                    </select>
-                ) : (
-                    <strong onClick={handleNameClick} style={{
-                        /* cursor: 'pointer', background: '#eee', padding: '2px 5px', borderRadius: '3px' */
-                        cursor: 'pointer',
-                        background: '#eee',
-                        padding: '2px 5px',
-                        borderRadius: '3px',
-                        display: 'block',   // Make it a block element
-                        width: '100%',      // Ensure it takes up all available space
-                        textAlign: 'left',  // You can adjust this to 'center' or 'right' if you want
-                    }}>
-                        {box.name}
-                    </strong>
-                )}
+                <select
+                    key={box.id}
+                    value={box.name}
+                    onChange={(event) => {
+                        onUpdateBox({ ...box, name: event.target.value });
+                    }}
+                    style={{ width: '100%', padding: '2px', border: '1px solid #ccc' }}
+                >
+                    {labelTypes.map((labelType) => (
+                        <option key={labelType.name} value={labelType.name}>
+                            {labelType.name}
+                        </option>
+                    ))}
+                </select>
             </div>
 
             {/* Start Time */}
