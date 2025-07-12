@@ -209,6 +209,15 @@ const VideoPlayer: React.FC = () => {
 
             <div style={{ display: 'flex' }}> {/* Main container with flex display */}
                 <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
+                    {/* Video Seek Controls */}
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 1; playerRef.current.pause(); } }}>⏪ -1s</button>
+                        <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.5; playerRef.current.pause(); } }}>-0.5s</button>
+                        <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.1; playerRef.current.pause(); } }}>-0.1s</button>
+                        <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.1; playerRef.current.pause(); } }}>+0.1s</button>
+                        <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.5; playerRef.current.pause(); } }}>+0.5s</button>
+                        <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 1; playerRef.current.pause(); } }}>+1s ⏩</button>
+                    </div>
                     {/* Video Player */}
                     <video
                         ref={playerRef}
