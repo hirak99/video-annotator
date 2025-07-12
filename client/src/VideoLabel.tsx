@@ -60,6 +60,9 @@ const VideoPlayer: React.FC = () => {
                 setCurrentVideoIdx(0);
             }
         });
+    }, [navigate]);
+
+    useEffect(() => {
         // Socket.IO connection for real-time label updates
         const socketUrl = BACKEND_URL?.replace(/^http/, "ws") || "";
         const socket: Socket = io(socketUrl, { transports: ["websocket"] });
@@ -73,7 +76,7 @@ const VideoPlayer: React.FC = () => {
         return () => {
             socket.disconnect();
         };
-    }, [navigate, currentVideoIdx]);
+    }, [currentVideoIdx]);
 
     useEffect(() => {
         getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
