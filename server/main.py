@@ -11,6 +11,7 @@ import flask
 from flask import jsonify
 from flask import request
 import flask_cors
+import flask_socketio
 import yaml
 
 # Convert mkv to mp4 here.
@@ -116,7 +117,10 @@ def _login_required(f):
 
 
 def add_common_endpoints(
-    app: flask.Flask, video_files: list[_VideoFile], label_types: list[_LabelProperties]
+    app: flask.Flask,
+    video_files: list[_VideoFile],
+    label_types: list[_LabelProperties],
+    socketio: flask_socketio.SocketIO,
 ):
     # Simple function to get labels from a JSON file
     def _load_labels(video_id: int) -> list[_Label]:
@@ -132,6 +136,11 @@ def add_common_endpoints(
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
             json.dump(labels, f)
+        # Emit a SocketIO event to notify all clients
+        try:
+            socketio.emit("labels_updated", {"video_id": video_id})
+        except Exception as e:
+            print("SocketIO emit failed:", e)
 
     @app.route("/api/labels/<int:video_id>", methods=["GET"])
     @_login_required
@@ -214,6 +223,7 @@ class MainApp:
         flask_cors.CORS(self.app, supports_credentials=True)
         # Add a secret key which is mandatory for using flask.session for session management.
         self.app.secret_key = "vO2hlWdvaKzL0smYUCrQtGgggzxA7paw"
+        self.socketio = flask_socketio.SocketIO(self.app, cors_allowed_origins="*")
 
         # Load video files from YAML.
         with open(config_file, "r") as f:
@@ -222,7 +232,12 @@ class MainApp:
         label_types: list[_LabelProperties] = config["labels"]
         video_files: list[_VideoFile] = config["videos"]
 
-        add_common_endpoints(self.app, video_files=video_files, label_types=label_types)
+        add_common_endpoints(
+            self.app,
+            video_files=video_files,
+            label_types=label_types,
+            socketio=self.socketio,
+        )
 
         self._repacked_original_fname: str = ""
         self._repacked_fname: str = ""
@@ -306,4 +321,4 @@ if __name__ == "__main__":
 
     main_app = MainApp(config_file=args.config)
     port = int(os.getenv("PORT", 8080))
-    main_app.app.run(debug=True, host="0.0.0.0", port=port)
+    main_app.socketio.run(main_app.app, debug=True, host="0.0.0.0", port=port)

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import axios from 'axios';
 import SidebarItem from './SidebarItem';
+import { io, Socket } from "socket.io-client";
 import { Box, LabelType } from './types';
 import LabelRenderer from './LabelRenderer';
 import { useNavigate } from 'react-router';
@@ -59,7 +60,20 @@ const VideoPlayer: React.FC = () => {
                 setCurrentVideoIdx(0);
             }
         });
-    }, [navigate]);
+        // Socket.IO connection for real-time label updates
+        const socketUrl = BACKEND_URL?.replace(/^http/, "ws") || "";
+        const socket: Socket = io(socketUrl, { transports: ["websocket"] });
+        socket.on("labels_updated", (data: { video_id: number }) => {
+            if (data.video_id === currentVideoIdx) {
+                getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
+                    setBoxes(response.data);
+                });
+            }
+        });
+        return () => {
+            socket.disconnect();
+        };
+    }, [navigate, currentVideoIdx]);
 
     useEffect(() => {
         getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
