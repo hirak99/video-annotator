@@ -30,8 +30,9 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
     return (
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: isDragging ? 'auto' : 'none' }}>
             {boxes
+                .map((box, originalIndex) => ({ ...box, originalIndex }))
                 .filter(box => currentTime >= box.start && currentTime <= box.end)
-                .map((box) => (
+                .map(box => (
                     <div
                         key={box.id}
                         data-box-id={box.id}
@@ -102,7 +103,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                             }
                         }}
                     >
-                        {box.name}
+                        {box.originalIndex + 1}. {box.name}
                     </div>
                 ))}
         </div>
