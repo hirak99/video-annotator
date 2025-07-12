@@ -6,7 +6,7 @@ After cloning, install the necessary packages.
 
 ```sh
 # Install necessary python modules.
-pip install flask flask_cors flask_socketio
+pip install flask flask_cors flask_socketio gunicorn
 
 # One time install of node modules.
 (cd client && npm install)
@@ -25,7 +25,7 @@ vim configuration.json
 
 ```sh
 # Start the server.
-./dev_server.sh -c configuration.json
+ANNOTATION_CONFIG_FILE=configuration.json ./dev_server.sh
 ```
 
 ```sh
@@ -33,7 +33,7 @@ vim configuration.json
 ./dev_client.sh
 ```
 
-Or you can choose to run the prod versions.
+Or you can choose to run the prod versions. See documentation in the prod*.sh scripts.
 
 # Features
 

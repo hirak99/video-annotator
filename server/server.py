@@ -1,4 +1,3 @@
-import argparse
 import functools
 import json
 import logging
@@ -13,6 +12,8 @@ from flask import request
 import flask_cors
 import flask_socketio
 import yaml
+
+_CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
 
 # Convert mkv to mp4 here.
 _TEMP_DIR = "_temp_movie_cache"
@@ -216,7 +217,7 @@ def add_common_endpoints(
 
 
 class MainApp:
-    def __init__(self, config_file: str):
+    def __init__(self):
         self.app: flask.Flask = flask.Flask(__name__)
         # Enable CORS for frontend to communicate with the backend.
         flask_cors.CORS(self.app, supports_credentials=True)
@@ -225,7 +226,7 @@ class MainApp:
         self.socketio = flask_socketio.SocketIO(self.app, cors_allowed_origins="*")
 
         # Load video files from YAML.
-        with open(config_file, "r") as f:
+        with open(_CONFIG_FILE, "r") as f:
             config = yaml.safe_load(f)
 
         label_types: list[_LabelProperties] = config["labels"]
@@ -308,16 +309,6 @@ class MainApp:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-
-    parser = argparse.ArgumentParser(description="Video Labeling Server")
-    parser.add_argument(
-        "-c",
-        "--config",
-        default="configuration_example.yaml",
-        help="Path to the configuration YAML file.",
-    )
-    args = parser.parse_args()
-
-    main_app = MainApp(config_file=args.config)
+    main_app = MainApp()
     port = int(os.getenv("PORT", 8080))
     main_app.socketio.run(main_app.app, debug=True, host="0.0.0.0", port=port)

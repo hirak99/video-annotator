@@ -1,5 +1,10 @@
 #!/bin/bash
 
+# Usage -
+# Server Host: The name of the backend server to query.
+# Backend Port: Edit if you changed it in prod_server.sh.
+# Port: The port where the frontend will serve.
+
 if [[ -z "$SERVER_HOST" ]]; then
   echo "Error: SERVER_HOST should point to your domain without prot. E.g. http://my-server-domain.com"
   exit 1
