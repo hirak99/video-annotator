@@ -263,22 +263,6 @@ const VideoPlayer: React.FC = () => {
                             <SidebarItem index={index} key={box.id} labelTypes={labelTypes} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
                         ))}
                     </div>
-
-                    {/* Sort button */}
-                    <button
-                        style={{ margin: '10px 0 0 auto', display: 'block' }}
-                        onClick={() => {
-                            setBoxes(prevBoxes =>
-                                [...prevBoxes].sort((a, b) => {
-                                    if (a.name < b.name) return -1;
-                                    if (a.name > b.name) return 1;
-                                    return a.start - b.start;
-                                })
-                            );
-                        }}
-                    >
-                        Sort
-                    </button>
                 </div> {/* End of sidebar */}
             </div>
         </div>
