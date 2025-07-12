@@ -34,7 +34,7 @@
   justify-content: center;
   align-items: center;
   gap: 10px;
-  padding: 4px 12px;
+  padding: 2px 12px;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
@@ -51,4 +51,8 @@
   opacity: 0.45;
   filter: grayscale(0.3);
   transition: opacity 0.2s;
+}
+
+.seek-btn:hover {
+  background: #ccc;
 }

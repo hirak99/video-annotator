@@ -212,15 +212,6 @@ const VideoPlayer: React.FC = () => {
 
             <div style={{ display: 'flex' }}> {/* Main container with flex display */}
                 <div style={{ width: '70%' }}>
-                    {/* Video Seek Controls */}
-                    <div className="seek-controls">
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 1; playerRef.current.pause(); } }}>⏪ -1s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.5; playerRef.current.pause(); } }}>-0.5s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.1; playerRef.current.pause(); } }}>-0.1s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.1; playerRef.current.pause(); } }}>+0.1s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.5; playerRef.current.pause(); } }}>+0.5s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 1; playerRef.current.pause(); } }}>+1s ⏩</button>
-                    </div>
                     {/* Video and boxes. Everything in this div must have relative positioning. */}
                     <div style={{ position: 'relative' }}>
                         {/* Video Player */}
@@ -248,6 +239,15 @@ const VideoPlayer: React.FC = () => {
                             handleUpdateBox={handleUpdateBox}
                             setBoxes={setBoxes}
                         />
+                    </div>
+                    {/* Video Seek Controls */}
+                    <div className="seek-controls">
+                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 1; playerRef.current.pause(); } }}>⏪ -1s</button>
+                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.5; playerRef.current.pause(); } }}>-0.5s</button>
+                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.1; playerRef.current.pause(); } }}>-0.1s</button>
+                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.1; playerRef.current.pause(); } }}>+0.1s</button>
+                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.5; playerRef.current.pause(); } }}>+0.5s</button>
+                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 1; playerRef.current.pause(); } }}>+1s ⏩</button>
                     </div>
                 </div> {/* End of video/box wrapper */}
 
