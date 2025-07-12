@@ -45,3 +45,10 @@
   cursor: pointer;
   transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
 }
+
+/* Dimmed sidebar item */
+.dimmed {
+  opacity: 0.45;
+  filter: grayscale(0.3);
+  transition: opacity 0.2s;
+}

@@ -28,8 +28,13 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ index, labelTypes, box, onUpd
     };
 
 
+    const isVisible = currentTime >= box.start && currentTime <= box.end;
+
     return (
-        <div style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: 'min-content 1fr 90px 90px 30px', gap: '5px', alignItems: 'center' }}>
+        <div
+            className={isVisible ? "" : "dimmed"}
+            style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: 'min-content 1fr 90px 90px 30px', gap: '5px', alignItems: 'center' }}
+        >
             {/* Index */}
             <div>{index + 1}.</div>
 
