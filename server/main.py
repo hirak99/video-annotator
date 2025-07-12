@@ -92,6 +92,7 @@ def _stream_video(video_path: str, request: flask.Request):
             data, status=206, mimetype="video/mp4", content_type="video/mp4"
         )
         response.headers["Content-Range"] = content_range
+        response.headers["Content-Length"] = str(content_length)
         return response
 
     # If no range is provided, send the whole video
