@@ -19,6 +19,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
     const [isDragging, setIsDragging] = useState(false);
     const scaleFactorX = videoDimensions.naturalWidth / videoDimensions.displayWidth;
     const scaleFactorY = videoDimensions.naturalHeight / videoDimensions.displayHeight;
+    const outlineBorder = 2;
 
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
         const target = event.target as HTMLElement;
@@ -40,9 +41,12 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                             position: 'absolute',
                             top: `${box.y / scaleFactorY}px`,
                             left: `${box.x / scaleFactorX}px`,
-                            width: `${box.width / scaleFactorX}px`,
-                            height: `${box.height / scaleFactorY}px`,
-                            border: `2px solid ${hashToHSLColor(stringToHash(box.name))}`,
+                            // - 2 * outlineBorder because UI render the rectangles weirdly.
+                            // With this adjustment, the border is rendered exactly inside.
+                            // If we do not make the adjustment, in application we would see the bottom right to be off towards top-left.
+                            width: `${box.width / scaleFactorX - 2 * outlineBorder}px`,
+                            height: `${box.height / scaleFactorY - 2 * outlineBorder}px`,
+                            border: `${outlineBorder}px solid ${hashToHSLColor(stringToHash(box.name))}`,
                             background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
                             pointerEvents: 'auto',
                         }}
