@@ -15,6 +15,9 @@ interface LabelRendererProps {
 }
 
 const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, videoDimensions, handleUpdateBox, setBoxes }) => {
+    const scaleFactorX = videoDimensions.naturalWidth / videoDimensions.displayWidth;
+    const scaleFactorY = videoDimensions.naturalHeight / videoDimensions.displayHeight;
+
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
         const target = event.target as HTMLElement;
         const rect = target.getBoundingClientRect();
@@ -31,15 +34,16 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                         data-box-id={box.id}
                         style={{
                             position: 'absolute',
-                            top: `${(box.y / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
-                            left: `${(box.x / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
-                            width: `${(box.width / videoDimensions.naturalWidth) * videoDimensions.displayWidth}px`,
-                            height: `${(box.height / videoDimensions.naturalHeight) * videoDimensions.displayHeight}px`,
+                            top: `${box.y / scaleFactorY}px`,
+                            left: `${box.x / scaleFactorX}px`,
+                            width: `${box.width / scaleFactorX}px`,
+                            height: `${box.height / scaleFactorY}px`,
                             border: `2px solid ${hashToHSLColor(stringToHash(box.name))}`,
                             background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
                             pointerEvents: 'auto',
                         }}
                         onMouseDown={(event) => {
+                            event.preventDefault();  // Prevent default e.g. click and drag selection.
                             event.stopPropagation();
                             const boxRef = event.currentTarget;
                             const boxId = boxRef.getAttribute('data-box-id');
@@ -52,17 +56,15 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                                 const initialWidth = box.width;
                                 const initialHeight = box.height;
 
-                                const scaleFactor = videoDimensions.naturalWidth / videoDimensions.displayWidth;
-
                                 const isBottomRight = isEventAtBottomRight(event);
 
                                 const handleMouseMove = (event: MouseEvent) => {
                                     const deltaX = event.clientX - startX;
                                     const deltaY = event.clientY - startY;
-                                    const newX = initialX + deltaX * scaleFactor;
-                                    const newY = initialY + deltaY * scaleFactor;
-                                    const newWidth = initialWidth + deltaX * scaleFactor;
-                                    const newHeight = initialHeight + deltaY * scaleFactor;
+                                    const newX = initialX + deltaX * scaleFactorX;
+                                    const newY = initialY + deltaY * scaleFactorY;
+                                    const newWidth = initialWidth + deltaX * scaleFactorX;
+                                    const newHeight = initialHeight + deltaY * scaleFactorY;
 
                                     if (isBottomRight) {
                                         box = { ...box!, width: newWidth, height: newHeight };
