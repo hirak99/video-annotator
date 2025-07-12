@@ -1,3 +1,4 @@
+import React, { useState } from 'react';
 import { Box } from './types';
 import { hashToHSLColor, stringToHash } from './utils';
 
@@ -15,17 +16,19 @@ interface LabelRendererProps {
 }
 
 const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, videoDimensions, handleUpdateBox, setBoxes }) => {
+    const [isDragging, setIsDragging] = useState(false);
     const scaleFactorX = videoDimensions.naturalWidth / videoDimensions.displayWidth;
     const scaleFactorY = videoDimensions.naturalHeight / videoDimensions.displayHeight;
 
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
         const target = event.target as HTMLElement;
         const rect = target.getBoundingClientRect();
-        return event.clientX >= rect.right - 10 && event.clientY >= rect.bottom - 10;
+        return event.clientX >= rect.right - 10 && event.clientX <= rect.right &&
+            event.clientY >= rect.bottom - 10 && event.clientY <= rect.bottom;
     };
 
     return (
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: isDragging ? 'auto' : 'none' }}>
             {boxes
                 .filter(box => currentTime >= box.start && currentTime <= box.end)
                 .map((box) => (
@@ -45,6 +48,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                         onMouseDown={(event) => {
                             event.preventDefault();  // Prevent default e.g. click and drag selection.
                             event.stopPropagation();
+                            setIsDragging(true);
                             const boxRef = event.currentTarget;
                             const boxId = boxRef.getAttribute('data-box-id');
                             let box = boxes.find(b => b.id === boxId);
@@ -61,20 +65,21 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                                 const handleMouseMove = (event: MouseEvent) => {
                                     const deltaX = event.clientX - startX;
                                     const deltaY = event.clientY - startY;
-                                    const newX = initialX + deltaX * scaleFactorX;
-                                    const newY = initialY + deltaY * scaleFactorY;
-                                    const newWidth = initialWidth + deltaX * scaleFactorX;
-                                    const newHeight = initialHeight + deltaY * scaleFactorY;
 
                                     if (isBottomRight) {
+                                        let newWidth = initialWidth + deltaX * scaleFactorX;
+                                        let newHeight = initialHeight + deltaY * scaleFactorY;
                                         box = { ...box!, width: newWidth, height: newHeight };
                                     } else {
+                                        const newX = initialX + deltaX * scaleFactorX;
+                                        const newY = initialY + deltaY * scaleFactorY;
                                         box = { ...box!, x: newX, y: newY };
                                     }
                                     setBoxes(boxes.map(b => b.id === boxId ? box! : b));
                                 };
 
                                 const handleMouseUp = () => {
+                                    setIsDragging(false);
                                     document.removeEventListener('mousemove', handleMouseMove);
                                     document.removeEventListener('mouseup', handleMouseUp);
                                     handleUpdateBox(box!);
