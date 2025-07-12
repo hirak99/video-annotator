@@ -208,9 +208,9 @@ const VideoPlayer: React.FC = () => {
             </select>
 
             <div style={{ display: 'flex' }}> {/* Main container with flex display */}
-                <div style={{ position: 'relative', width: '70%' }}> {/* Video/Box wrapper, taking 70% width */}
+                <div style={{ width: '70%' }}>
                     {/* Video Seek Controls */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', margin: '4px' }}>
                         <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 1; playerRef.current.pause(); } }}>⏪ -1s</button>
                         <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.5; playerRef.current.pause(); } }}>-0.5s</button>
                         <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.1; playerRef.current.pause(); } }}>-0.1s</button>
@@ -218,31 +218,34 @@ const VideoPlayer: React.FC = () => {
                         <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.5; playerRef.current.pause(); } }}>+0.5s</button>
                         <button onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 1; playerRef.current.pause(); } }}>+1s ⏩</button>
                     </div>
-                    {/* Video Player */}
-                    <video
-                        ref={playerRef}
-                        src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
-                        controls
-                        autoPlay
-                        onTimeUpdate={handleTimeUpdate}
-                        onLoadedMetadata={handleVideoLoad}
-                        style={{ width: '100%', backgroundColor: 'black' }}
-                    />
+                    {/* Video and boxes. Everything in this div must have relative positioning. */}
+                    <div style={{ position: 'relative' }}>
+                        {/* Video Player */}
+                        <video
+                            ref={playerRef}
+                            src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
+                            controls
+                            autoPlay
+                            onTimeUpdate={handleTimeUpdate}
+                            onLoadedMetadata={handleVideoLoad}
+                            style={{ width: '100%', backgroundColor: 'black' }}
+                        />
 
-                    {saving &&
-                        <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
-                            Saving...
-                        </div>
-                    }
+                        {saving &&
+                            <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+                                Saving...
+                            </div>
+                        }
 
-                    {/* Label Boxes */}
-                    <LabelRenderer
-                        boxes={boxes}
-                        currentTime={currentTime}
-                        videoDimensions={videoDimensions}
-                        handleUpdateBox={handleUpdateBox}
-                        setBoxes={setBoxes}
-                    />
+                        {/* Label Boxes */}
+                        <LabelRenderer
+                            boxes={boxes}
+                            currentTime={currentTime}
+                            videoDimensions={videoDimensions}
+                            handleUpdateBox={handleUpdateBox}
+                            setBoxes={setBoxes}
+                        />
+                    </div>
                 </div> {/* End of video/box wrapper */}
 
                 {/* Sidebar */}
