@@ -132,7 +132,6 @@ def add_common_endpoints(
 
     # Simple function to save labels to a JSON file
     def _save_labels(video_id: int, labels: list[_Label]):
-        labels.sort(key=lambda x: (x["name"], x["start"]))
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
             json.dump(labels, f)
