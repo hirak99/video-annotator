@@ -20,6 +20,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
+    const [seeking, setSeeking] = useState(false);
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
     const [labelError, setLabelError] = useState<string>("");
     const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
@@ -207,13 +208,22 @@ const VideoPlayer: React.FC = () => {
     // Seek video and update state
     const seekToTime = (time: number) => {
         if (playerRef.current) {
-            // Do not set time manually i.e. `setCurrentTime(time)`.
-            // That changes the boxes immediately, but the video seek takes longer.
-
+            setSeeking(true);
             playerRef.current.currentTime = time;
             playerRef.current.pause();
         }
     };
+
+    // Listen for seeked event to clear seeking indicator
+    React.useEffect(() => {
+        const video = playerRef.current;
+        if (!video) return;
+        const handleSeeked = () => setSeeking(false);
+        video.addEventListener('seeked', handleSeeked);
+        return () => {
+            video.removeEventListener('seeked', handleSeeked);
+        };
+    }, [playerRef.current]);
 
     return (
         <div>
@@ -245,6 +255,11 @@ const VideoPlayer: React.FC = () => {
                         {saving &&
                             <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
                                 Saving...
+                            </div>
+                        }
+                        {seeking &&
+                            <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)', zIndex: 10 }}>
+                                Seeking...
                             </div>
                         }
 
