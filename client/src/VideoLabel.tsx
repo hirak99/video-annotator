@@ -184,6 +184,7 @@ const VideoPlayer: React.FC = () => {
             height: 100,
         };
         setBoxes([...boxes, newBox]);
+        setSelectedBoxId(newBox.id);
         withSaving(
             axios.post(`${BACKEND_URL}/api/add-label/${currentVideoIdx}`, newBox)
         );
