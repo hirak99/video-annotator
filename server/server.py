@@ -1,3 +1,4 @@
+import copy
 import functools
 import json
 import logging
@@ -131,27 +132,28 @@ def add_common_endpoints(
                 return json.load(f)
         return []
 
-    # Undo stack management: session['undo_stack'][video_id] = [list of label states]
-    def _push_undo_state(video_id: int, labels: list[_Label]):
+    # TODO: All calls which alter the undo stack should return whether undo can be called.
+    def _get_undo_stack(video_id: int) -> list[list[_Label]]:
         if "undo_stack" not in flask.session:
             flask.session["undo_stack"] = {}
         undo_stack = flask.session["undo_stack"]
         video_key = str(video_id)
         if video_key not in undo_stack:
+            # No need to set `flask.session.modified = True`, it's fine if this is not saved.
             undo_stack[video_key] = []
-        # Store a deep copy of the current state
-        import copy
-        undo_stack[video_key].append(copy.deepcopy(labels))
+        return undo_stack[video_key]
+
+    # Undo stack management: session['undo_stack'][video_id] = [list of label states]
+    def _push_undo_state(video_id: int, labels: list[_Label]):
+        undo_stack = _get_undo_stack(video_id)
+        undo_stack.append(copy.deepcopy(labels))
         flask.session.modified = True
 
     def _pop_undo_state(video_id: int) -> typing.Optional[list[_Label]]:
-        if "undo_stack" not in flask.session:
+        undo_stack = _get_undo_stack(video_id)
+        if not undo_stack:
             return None
-        undo_stack = flask.session["undo_stack"]
-        video_key = str(video_id)
-        if video_key not in undo_stack or not undo_stack[video_key]:
-            return None
-        return undo_stack[video_key].pop()
+        return undo_stack.pop()
 
     # Simple function to save labels to a JSON file
     def _save_labels(video_id: int, labels: list[_Label]):
@@ -162,7 +164,7 @@ def add_common_endpoints(
         try:
             socketio.emit("labels_updated", {"video_id": video_id})
         except Exception as e:
-            print("SocketIO emit failed:", e)
+            logging.warning("SocketIO emit failed:", e)
 
     @app.route("/api/labels/<int:video_id>", methods=["GET"])
     @_login_required
