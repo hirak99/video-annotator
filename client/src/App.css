@@ -28,8 +28,15 @@
   padding: 8px 10px;
 }
 
-/* Seek controls styling */
-.seek-controls {
+/* Dimmed sidebar item */
+.dimmed {
+  opacity: 0.45;
+  filter: grayscale(0.3);
+  transition: opacity 0.2s;
+}
+
+/* Media controls styling */
+.media-controls {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -38,7 +45,7 @@
   box-shadow: 0 1px 4px rgba(0,0,0,0.06);
 }
 
-.seek-btn {
+.media-btn {
   border: none;
   background: #e0e0e0;
   color: #222;
@@ -46,14 +53,7 @@
   transition: background 0.15s, box-shadow 0.15s, transform 0.1s;
 }
 
-/* Dimmed sidebar item */
-.dimmed {
-  opacity: 0.45;
-  filter: grayscale(0.3);
-  transition: opacity 0.2s;
-}
-
-.seek-btn:hover {
+.media-btn:hover {
   background: #ccc;
 }
 

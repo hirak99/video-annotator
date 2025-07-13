@@ -279,13 +279,26 @@ const VideoPlayer: React.FC = () => {
                         />
                     </div>
                     {/* Video Seek Controls */}
-                    <div className="seek-controls">
-                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 1); }}>⏪ -1s</button>
-                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.5); }}>-0.5s</button>
-                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.1); }}>-0.1s</button>
-                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.1); }}>+0.1s</button>
-                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.5); }}>+0.5s</button>
-                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 1); }}>+1s ⏩</button>
+                    <div className="media-controls">
+                        <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 1); }}>⏪ -1s</button>
+                        <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.5); }}>-0.5s</button>
+                        <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.1); }}>-0.1s</button>
+
+                        {/* Play / pause button */}
+                        <button className="media-btn" onClick={() => {
+                            if (!playerRef.current) return;
+                            if (playerRef.current.paused) {
+                                playerRef.current.play();
+                            } else {
+                                playerRef.current.pause();
+                            }
+                        }}>
+                            {playerRef.current && playerRef.current.paused ? '▶️' : '⏸️'}
+                        </button>
+
+                        <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.1); }}>+0.1s</button>
+                        <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.5); }}>+0.5s</button>
+                        <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 1); }}>+1s ⏩</button>
                     </div>
                 </div> {/* End of video/box wrapper */}
 
