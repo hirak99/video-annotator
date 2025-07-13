@@ -25,7 +25,7 @@ const VideoPlayer: React.FC = () => {
     const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
     const [videoFiles, setVideoFiles] = useState<any[]>([]);
     const [labelTypes, setLabelTypes] = useState<LabelType[]>([]);
-    const [currentTime, setCurrentTime] = useState<number>(0);  // Track current video time (absolute)
+    const [currentTime, setCurrentTime] = useState<number>(0);
     const [videoDimensions, setVideoDimensions] = useState({
         naturalWidth: 0,
         naturalHeight: 0,
@@ -204,6 +204,14 @@ const VideoPlayer: React.FC = () => {
         };
     }, [saving]);
 
+    // Seek video and update state
+    const seekToTime = (time: number) => {
+        setCurrentTime(time);
+        if (playerRef.current) {
+            playerRef.current.currentTime = time;
+        }
+    };
+
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -293,6 +301,7 @@ const VideoPlayer: React.FC = () => {
                                 currentTime={currentTime}
                                 selectedBoxId={selectedBoxId}
                                 setSelectedBoxId={setSelectedBoxId}
+                                seekToTime={seekToTime}
                             />
                         ))}
                     </div>

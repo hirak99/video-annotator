@@ -15,6 +15,7 @@ interface SidebarItemProps {
     currentTime: number;
     selectedBoxId: string | null;
     setSelectedBoxId: (id: string) => void;
+    seekToTime: (time: number) => void;
 }
 
 const SidebarItem: React.FC<SidebarItemProps> = ({
@@ -25,7 +26,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
     onDeleteBox,
     currentTime,
     selectedBoxId,
-    setSelectedBoxId
+    setSelectedBoxId,
+    seekToTime
 }) => {
 
     const handleSetStart = () => {
@@ -37,7 +39,6 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
     const handleSetEnd = () => {
         onUpdateBox({ ...box, end: currentTime });
     };
-
 
     const isVisible = currentTime >= box.start && currentTime <= box.end;
 
@@ -57,12 +58,17 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 cursor: 'pointer'
             }}
             onMouseDown={() => setSelectedBoxId(box.id)}
+            onClick={() => {
+                if (currentTime < box.start || currentTime > box.end) {
+                    seekToTime(box.start);
+                }
+            }}
         >
             {/* Index */}
-            <div>{index + 1}.</div>
+            <div className='seekable-target'>{index + 1}.</div>
 
             {/* Box Name */}
-            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+            <div className='seekable-target' style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                 <select
                     key={box.id}
                     value={box.name}
