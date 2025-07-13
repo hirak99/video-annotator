@@ -323,7 +323,7 @@ const VideoPlayer: React.FC = () => {
                         alignItems: 'center'
                     }}>
                         <span>Regions of Interest</span>
-                        <button onClick={addBox} style={{ marginTop: '10px' }}>Add</button>
+                        <button onClick={addBox}>Add</button>
                     </div>
 
                     {/* Div to show labelError and hidden if error is empty */}
