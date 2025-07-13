@@ -42,6 +42,13 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
     const isVisible = currentTime >= box.start && currentTime <= box.end;
 
+    const handleClickSeekTime = (box: Box) => {
+        if (currentTime < box.start || currentTime > box.end) {
+            seekToTime(box.start);
+        }
+    };
+
+
     return (
         <div
             className={isVisible ? "" : "dimmed"}
@@ -58,17 +65,12 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 cursor: 'pointer'
             }}
             onMouseDown={() => setSelectedBoxId(box.id)}
-            onClick={() => {
-                if (currentTime < box.start || currentTime > box.end) {
-                    seekToTime(box.start);
-                }
-            }}
         >
             {/* Index */}
-            <div className='seekable-target'>{index + 1}.</div>
+            <div onClick={() => handleClickSeekTime(box)}>{index + 1}.</div>
 
             {/* Box Name */}
-            <div className='seekable-target' style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+            <div onClick={() => handleClickSeekTime(box)} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                 <select
                     key={box.id}
                     value={box.name}

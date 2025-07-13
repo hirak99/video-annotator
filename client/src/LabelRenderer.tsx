@@ -53,10 +53,10 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                             left: `${box.x / scaleFactorX}px`,
                             width: `${box.width / scaleFactorX - 2 * outlineBorder}px`,
                             height: `${box.height / scaleFactorY - 2 * outlineBorder}px`,
-                            border: `${outlineBorder}px solid ${box.id === selectedBoxId ? 'blue' : hashToHSLColor(stringToHash(box.name))}`,
+                            border: `${outlineBorder}px solid ${hashToHSLColor(stringToHash(box.name))}`,
                             background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`,
                             pointerEvents: 'auto',
-                            // boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : undefined,
+                            boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : undefined,
                             zIndex: box.id === selectedBoxId ? 2 : 1,
                         }}
                         onMouseDown={(event) => {
@@ -71,7 +71,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                             const boxId = boxRef.getAttribute('data-box-id');
                             let box = boxes.find(b => b.id === boxId);
                             if (box) {
-                                setSelectedBoxId(box.id);
+                                setSelectedBoxId(selectedBoxId === box.id ? null : box.id);
 
                                 const startX = event.clientX;
                                 const startY = event.clientY;
@@ -83,6 +83,9 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                                 const isBottomRight = isEventAtBottomRight(event);
 
                                 const handleMouseMove = (event: MouseEvent) => {
+                                    // Remove thick border while moving.
+                                    setSelectedBoxId(null);
+
                                     const deltaX = event.clientX - startX;
                                     const deltaY = event.clientY - startY;
 
@@ -99,7 +102,6 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                                 };
 
                                 const handleMouseUp = (event: MouseEvent) => {
-                                    setSelectedBoxId(null);
                                     setIsDragging(false);
                                     document.removeEventListener('mousemove', handleMouseMove);
                                     document.removeEventListener('mouseup', handleMouseUp);

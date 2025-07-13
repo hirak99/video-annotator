@@ -206,9 +206,12 @@ const VideoPlayer: React.FC = () => {
 
     // Seek video and update state
     const seekToTime = (time: number) => {
-        setCurrentTime(time);
         if (playerRef.current) {
+            // Do not set time manually i.e. `setCurrentTime(time)`.
+            // That changes the boxes immediately, but the video seek takes longer.
+
             playerRef.current.currentTime = time;
+            playerRef.current.pause();
         }
     };
 
@@ -258,12 +261,12 @@ const VideoPlayer: React.FC = () => {
                     </div>
                     {/* Video Seek Controls */}
                     <div className="seek-controls">
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 1; playerRef.current.pause(); } }}>⏪ -1s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.5; playerRef.current.pause(); } }}>-0.5s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime -= 0.1; playerRef.current.pause(); } }}>-0.1s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.1; playerRef.current.pause(); } }}>+0.1s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 0.5; playerRef.current.pause(); } }}>+0.5s</button>
-                        <button className="seek-btn" onClick={() => { if (playerRef.current) { playerRef.current.currentTime += 1; playerRef.current.pause(); } }}>+1s ⏩</button>
+                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 1); }}>⏪ -1s</button>
+                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.5); }}>-0.5s</button>
+                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.1); }}>-0.1s</button>
+                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.1); }}>+0.1s</button>
+                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.5); }}>+0.5s</button>
+                        <button className="seek-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 1); }}>+1s ⏩</button>
                     </div>
                 </div> {/* End of video/box wrapper */}
 
