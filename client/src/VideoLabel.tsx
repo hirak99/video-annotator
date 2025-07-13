@@ -249,7 +249,10 @@ const VideoPlayer: React.FC = () => {
                             ref={playerRef}
                             src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
                             controls
+                            controlsList='nofullscreen'  // Seems Firefox does not respect this.
+                            disablePictureInPicture
                             autoPlay
+                            muted
                             onTimeUpdate={handleTimeUpdate}
                             onLoadedMetadata={handleVideoLoad}
                             style={{ width: '100%', backgroundColor: 'black' }}
