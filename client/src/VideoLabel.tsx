@@ -288,7 +288,14 @@ const VideoPlayer: React.FC = () => {
                 </div> {/* End of video/box wrapper */}
 
                 {/* Sidebar */}
-                <div style={{ width: '30%', padding: '10px', borderLeft: '1px solid #ccc', overflowY: 'auto' }}> {/* Sidebar, taking 30% width */}
+                <div
+                    style={{
+                        width: '30%', // Sidebar takes 30% width.
+                        padding: '10px',
+                        borderLeft: '1px solid #ccc',
+                        overflowY: 'auto',
+                    }}
+                >
                     <div style={{
                         paddingBottom: '10px',
                         borderBottom: '1px solid #eee',

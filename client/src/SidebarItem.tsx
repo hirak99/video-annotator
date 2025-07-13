@@ -14,7 +14,7 @@ interface SidebarItemProps {
     onDeleteBox: (boxId: string) => void;
     currentTime: number;
     selectedBoxId: string | null;
-    setSelectedBoxId: (id: string) => void;
+    setSelectedBoxId: (id: string | null) => void;
     seekToTime: (time: number) => void;
 }
 
@@ -69,7 +69,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 boxShadow: box.id === selectedBoxId ? '0 0 0 2px #1976d2' : undefined,
                 cursor: 'pointer'
             }}
-            onMouseDown={() => setSelectedBoxId(box.id)}
+            onMouseDown={() => setSelectedBoxId(box.id === selectedBoxId ? null : box.id)}
             onClick={(event) => handleClickSeekTime(event.target, box)}
         >
             {/* Index */}
