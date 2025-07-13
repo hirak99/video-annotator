@@ -223,7 +223,7 @@ const VideoPlayer: React.FC = () => {
         return () => {
             video.removeEventListener('seeked', handleSeeked);
         };
-    }, [playerRef.current]);
+    }, []);
 
     return (
         <div>
@@ -258,8 +258,9 @@ const VideoPlayer: React.FC = () => {
                             </div>
                         }
                         {seeking &&
-                            <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)', zIndex: 10 }}>
-                                Seeking...
+                            <div className="seeking-overlay">
+                                <div className="seeking-spinner"></div>
+                                <div className="seeking-text">Seeking...</div>
                             </div>
                         }
 
