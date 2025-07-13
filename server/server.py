@@ -1,4 +1,3 @@
-import copy
 import functools
 import json
 import logging
@@ -136,29 +135,6 @@ def add_common_endpoints(
                 return json.load(f)
         return []
 
-    # TODO: All calls which alter the undo stack should return whether undo can be called.
-    def _get_undo_stack(video_id: int) -> list[list[_Label]]:
-        if "undo_stack" not in flask.session:
-            flask.session["undo_stack"] = {}
-        undo_stack = flask.session["undo_stack"]
-        video_key = str(video_id)
-        if video_key not in undo_stack:
-            # No need to set `flask.session.modified = True`, it's fine if this is not saved.
-            undo_stack[video_key] = []
-        return undo_stack[video_key]
-
-    # Undo stack management: session['undo_stack'][video_id] = [list of label states]
-    def _push_undo_state(video_id: int, labels: list[_Label]):
-        undo_stack = _get_undo_stack(video_id)
-        undo_stack.append(copy.deepcopy(labels))
-        flask.session.modified = True
-
-    def _pop_undo_state(video_id: int) -> typing.Optional[list[_Label]]:
-        undo_stack = _get_undo_stack(video_id)
-        if not undo_stack:
-            return None
-        return undo_stack.pop()
-
     # Simple function to save labels to a JSON file
     def _save_labels(video_id: int, labels: list[_Label]):
         labels_file = video_files[video_id]["label_file"]
@@ -181,7 +157,6 @@ def add_common_endpoints(
         new_label: _Label = typing.cast(_Label, request.json)
         new_label["creator"] = flask.session["username"]
         labels = _load_labels(video_id)
-        _push_undo_state(video_id, labels)
         labels.append(new_label)
         _save_labels(video_id, labels)
         return jsonify({"status": "success", "label": new_label}), 201
@@ -191,7 +166,6 @@ def add_common_endpoints(
     def update_label(video_id: int, label_id: str):
         updated_label_data = typing.cast(_Label, request.json)
         labels = _load_labels(video_id)
-        _push_undo_state(video_id, labels)
         for idx, label in enumerate(labels):
             if label["id"] == label_id:
                 # Update the existing label with the new data, keeping the original ID
@@ -214,7 +188,6 @@ def add_common_endpoints(
     @_login_required
     def delete_label(video_id, label_id):
         labels = _load_labels(video_id)
-        _push_undo_state(video_id, labels)
         initial_count = len(labels)
         labels = [label for label in labels if label["id"] != label_id]
         if len(labels) < initial_count:
@@ -232,15 +205,6 @@ def add_common_endpoints(
                 ),
                 404,
             )
-
-    @app.route("/api/undo/<int:video_id>", methods=["POST"])
-    @_login_required
-    def undo_label(video_id: int):
-        prev_labels = _pop_undo_state(video_id)
-        if prev_labels is None:
-            return jsonify({"status": "error", "message": "Nothing to undo"}), 400
-        _save_labels(video_id, prev_labels)
-        return jsonify({"status": "success", "labels": prev_labels})
 
     @app.route("/api/video-files", methods=["GET"])
     @_login_required
