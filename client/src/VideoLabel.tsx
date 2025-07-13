@@ -6,6 +6,7 @@ import { io, Socket } from "socket.io-client";
 import { Box, LabelType } from './types';
 import LabelRenderer from './LabelRenderer';
 import { useNavigate } from 'react-router';
+import {generateRandomString } from './utils'
 
 axios.defaults.withCredentials = true;
 
@@ -173,7 +174,8 @@ const VideoPlayer: React.FC = () => {
 
     const addBox = () => {
         const newBox = {
-            id: Date.now().toString(),
+            // Date includes milliseconds. Add a random str anyway, to make collisions practically impossible.
+            id: Date.now().toString() + "_" + generateRandomString(7),
             // First of the labelTypes.
             name: labelTypes[0].name,
             start: currentTime,
