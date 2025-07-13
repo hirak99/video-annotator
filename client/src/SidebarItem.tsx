@@ -42,7 +42,12 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
     const isVisible = currentTime >= box.start && currentTime <= box.end;
 
-    const handleClickSeekTime = (box: Box) => {
+    const handleClickSeekTime = (target: EventTarget, box: Box) => {
+        if (target instanceof HTMLButtonElement) {
+            // Do not seek on button clicks.
+            // Buttons already do some action, like setting the time or deleting - and they can semantically conflict with seeking.
+            return;
+        }
         if (currentTime < box.start || currentTime > box.end) {
             seekToTime(box.start);
         }
@@ -65,12 +70,13 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 cursor: 'pointer'
             }}
             onMouseDown={() => setSelectedBoxId(box.id)}
+            onClick={(event) => handleClickSeekTime(event.target, box)}
         >
             {/* Index */}
-            <div onClick={() => handleClickSeekTime(box)}>{index + 1}.</div>
+            <div>{index + 1}.</div>
 
             {/* Box Name */}
-            <div onClick={() => handleClickSeekTime(box)} style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
+            <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', width: '100%' }}>
                 <select
                     key={box.id}
                     value={box.name}
@@ -103,7 +109,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 {formatTime(box.end)} <span style={{ marginLeft: '5px', position: 'relative', top: '-1px' }}>⧯</span>
             </button>
 
-            {/* Buttons */}
+            {/* Delete */}
             <button onClick={() => onDeleteBox(box.id)} style={{ padding: '2px 5px', color: 'red' }} aria-label="Delete Box">✖</button> {/* Using a cross icon */}
         </div>
     );
