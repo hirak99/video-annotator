@@ -160,12 +160,6 @@ const VideoPlayer: React.FC = () => {
     };
 
     const handleUpdateBox = (updatedBox: Box) => {
-        // Update only if there is an actual change, otherwise save the backend call.
-        const originalBox = boxes.find(box => box.id === updatedBox.id);
-        if (JSON.stringify(originalBox) === JSON.stringify(updatedBox)) {
-            return;
-        }
-
         setBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
         withSaving(
             axios.put(`${BACKEND_URL}/api/update-label/${currentVideoIdx}/${updatedBox.id}`, updatedBox)

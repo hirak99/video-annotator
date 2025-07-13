@@ -174,7 +174,11 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                                     setIsDragging(false);
                                     document.removeEventListener('mousemove', handleMouseMove);
                                     document.removeEventListener('mouseup', handleMouseUp);
-                                    handleUpdateBox(box!);
+
+                                    // Update only if mouse moved, and not just clicked.
+                                    if (event.clientX !== startX || event.clientY !== startY) {
+                                        handleUpdateBox(box!);
+                                    }
                                 };
 
                                 document.addEventListener('mousemove', handleMouseMove);
