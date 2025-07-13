@@ -36,6 +36,10 @@ class _VideoFile(TypedDict):
 
 
 class _Label(TypedDict):
+    # Username who created this label.
+    creator: str
+
+    # Following fields come from the UI.
     id: str
     name: str
     start: float
@@ -175,6 +179,7 @@ def add_common_endpoints(
     @_login_required
     def add_label(video_id: int):
         new_label: _Label = typing.cast(_Label, request.json)
+        new_label["creator"] = flask.session["username"]
         labels = _load_labels(video_id)
         _push_undo_state(video_id, labels)
         labels.append(new_label)
