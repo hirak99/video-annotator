@@ -51,6 +51,10 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                             pointerEvents: 'auto',
                         }}
                         onMouseDown={(event) => {
+                            // Only activate on left click, ignore other clicks.
+                            if (event.button !== 0) {
+                                return;
+                            }
                             event.preventDefault();  // Prevent default e.g. click and drag selection.
                             event.stopPropagation();
                             setIsDragging(true);
