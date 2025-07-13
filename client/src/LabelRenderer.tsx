@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box } from './types';
 import { hashToHSLColor, stringToHash } from './utils';
 
@@ -30,6 +30,75 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
     const scaleFactorX = videoDimensions.naturalWidth / videoDimensions.displayWidth;
     const scaleFactorY = videoDimensions.naturalHeight / videoDimensions.displayHeight;
     const outlineBorder = 2;
+
+    // Keyboard shortcuts for moving/resizing selected box
+    useEffect(() => {
+        if (!selectedBoxId) return;
+
+        const handleKeyDown = (event: KeyboardEvent) => {
+            // Only act if a box is selected and no input is focused
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || (document.activeElement as HTMLElement).isContentEditable)) {
+                return;
+            }
+
+            const boxIndex = boxes.findIndex(b => b.id === selectedBoxId);
+            if (boxIndex === -1) return;
+            const box = boxes[boxIndex];
+
+            let dx = 0, dy = 0, dWidth = 0, dHeight = 0;
+            const moveAmount = event.ctrlKey ? 5 : 1;
+
+            // Arrow keys: move; Shift+Arrow: resize
+            switch (event.key) {
+                case 'ArrowLeft':
+                    if (event.shiftKey) dWidth = -moveAmount;
+                    else dx = -moveAmount;
+                    break;
+                case 'ArrowRight':
+                    if (event.shiftKey) dWidth = moveAmount;
+                    else dx = moveAmount;
+                    break;
+                case 'ArrowUp':
+                    if (event.shiftKey) dHeight = -moveAmount;
+                    else dy = -moveAmount;
+                    break;
+                case 'ArrowDown':
+                    if (event.shiftKey) dHeight = moveAmount;
+                    else dy = moveAmount;
+                    break;
+                default:
+                    return;
+            }
+
+            // Prevent scrolling
+            event.preventDefault();
+
+            let updatedBox = { ...box };
+            if (dx !== 0 || dy !== 0) {
+                updatedBox.x = Math.max(0, box.x + dx * scaleFactorX);
+                updatedBox.y = Math.max(0, box.y + dy * scaleFactorY);
+            }
+            if (dWidth !== 0 || dHeight !== 0) {
+                updatedBox.width = Math.max(1, box.width + dWidth * scaleFactorX);
+                updatedBox.height = Math.max(1, box.height + dHeight * scaleFactorY);
+            }
+
+            // Only update if something changed
+            if (
+                updatedBox.x !== box.x ||
+                updatedBox.y !== box.y ||
+                updatedBox.width !== box.width ||
+                updatedBox.height !== box.height
+            ) {
+                const newBoxes = boxes.map((b, i) => i === boxIndex ? updatedBox : b);
+                setBoxes(newBoxes);
+                handleUpdateBox(updatedBox);
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [selectedBoxId, boxes, setBoxes, handleUpdateBox, scaleFactorX, scaleFactorY]);
 
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
         const target = event.target as HTMLElement;
