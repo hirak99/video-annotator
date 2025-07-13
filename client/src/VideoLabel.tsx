@@ -20,6 +20,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 
 const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<Box[]>([]);
+    const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
     const [labelError, setLabelError] = useState<string>("");
     const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
     const [videoFiles, setVideoFiles] = useState<any[]>([]);
@@ -244,6 +245,8 @@ const VideoPlayer: React.FC = () => {
                             videoDimensions={videoDimensions}
                             handleUpdateBox={handleUpdateBox}
                             setBoxes={setBoxes}
+                            selectedBoxId={selectedBoxId}
+                            setSelectedBoxId={setSelectedBoxId}
                         />
                     </div>
                     {/* Video Seek Controls */}
@@ -281,7 +284,17 @@ const VideoPlayer: React.FC = () => {
                     {/* List of all the annotations. */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}> {/* Flex grid for items */}
                         {boxes.map((box, index) => (
-                            <SidebarItem index={index} key={box.id} labelTypes={labelTypes} box={box} onUpdateBox={handleUpdateBox} onDeleteBox={handleDeleteBox} currentTime={currentTime} />
+                            <SidebarItem
+                                index={index}
+                                key={box.id}
+                                labelTypes={labelTypes}
+                                box={box}
+                                onUpdateBox={handleUpdateBox}
+                                onDeleteBox={handleDeleteBox}
+                                currentTime={currentTime}
+                                selectedBoxId={selectedBoxId}
+                                setSelectedBoxId={setSelectedBoxId}
+                            />
                         ))}
                     </div>
                 </div> {/* End of sidebar */}

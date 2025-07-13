@@ -11,11 +11,22 @@ interface SidebarItemProps {
     labelTypes: LabelType[];
     box: Box;
     onUpdateBox: (updatedBox: Box) => void;
-    onDeleteBox: (boxId: string) => void; // Add onDeleteBox prop
-    currentTime: number; // Add currentTime prop
+    onDeleteBox: (boxId: string) => void;
+    currentTime: number;
+    selectedBoxId: string | null;
+    setSelectedBoxId: (id: string) => void;
 }
 
-const SidebarItem: React.FC<SidebarItemProps> = ({ index, labelTypes, box, onUpdateBox, onDeleteBox, currentTime }) => {
+const SidebarItem: React.FC<SidebarItemProps> = ({
+    index,
+    labelTypes,
+    box,
+    onUpdateBox,
+    onDeleteBox,
+    currentTime,
+    selectedBoxId,
+    setSelectedBoxId
+}) => {
 
     const handleSetStart = () => {
         // If the start is less than end, set newEndTime to start + 1.
@@ -33,7 +44,19 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ index, labelTypes, box, onUpd
     return (
         <div
             className={isVisible ? "" : "dimmed"}
-            style={{ borderBottom: '1px solid #eee', paddingBottom: '5px', marginBottom: '5px', display: 'grid', gridTemplateColumns: 'min-content 1fr 90px 90px 30px', gap: '5px', alignItems: 'center' }}
+            style={{
+                borderBottom: '1px solid #eee',
+                paddingBottom: '5px',
+                marginBottom: '5px',
+                display: 'grid',
+                gridTemplateColumns: 'min-content 1fr 90px 90px 30px',
+                gap: '5px',
+                alignItems: 'center',
+                background: box.id === selectedBoxId ? '#e3f0ff' : undefined,
+                boxShadow: box.id === selectedBoxId ? '0 0 0 2px #1976d2' : undefined,
+                cursor: 'pointer'
+            }}
+            onMouseDown={() => setSelectedBoxId(box.id)}
         >
             {/* Index */}
             <div>{index + 1}.</div>

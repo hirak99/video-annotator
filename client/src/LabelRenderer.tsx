@@ -13,9 +13,19 @@ interface LabelRendererProps {
     };
     handleUpdateBox: (updatedBox: Box) => void;
     setBoxes: (updatedBoxes: Box[]) => void;
+    selectedBoxId: string | null;
+    setSelectedBoxId: (id: string) => void;
 }
 
-const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, videoDimensions, handleUpdateBox, setBoxes }) => {
+const LabelRenderer: React.FC<LabelRendererProps> = ({
+    boxes,
+    currentTime,
+    videoDimensions,
+    handleUpdateBox,
+    setBoxes,
+    selectedBoxId,
+    setSelectedBoxId
+}) => {
     const [isDragging, setIsDragging] = useState(false);
     const scaleFactorX = videoDimensions.naturalWidth / videoDimensions.displayWidth;
     const scaleFactorY = videoDimensions.naturalHeight / videoDimensions.displayHeight;
@@ -41,14 +51,13 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                             position: 'absolute',
                             top: `${box.y / scaleFactorY}px`,
                             left: `${box.x / scaleFactorX}px`,
-                            // - 2 * outlineBorder because UI render the rectangles weirdly.
-                            // With this adjustment, the border is rendered exactly inside.
-                            // If we do not make the adjustment, in application we would see the bottom right to be off towards top-left.
                             width: `${box.width / scaleFactorX - 2 * outlineBorder}px`,
                             height: `${box.height / scaleFactorY - 2 * outlineBorder}px`,
                             border: `${outlineBorder}px solid ${hashToHSLColor(stringToHash(box.name))}`,
-                            background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`, // Add alpha for background
+                            background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`,
                             pointerEvents: 'auto',
+                            boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : undefined,
+                            zIndex: box.id === selectedBoxId ? 2 : 1,
                         }}
                         onMouseDown={(event) => {
                             // Only activate on left click, ignore other clicks.
@@ -62,6 +71,8 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({ boxes, currentTime, video
                             const boxId = boxRef.getAttribute('data-box-id');
                             let box = boxes.find(b => b.id === boxId);
                             if (box) {
+                                setSelectedBoxId(box.id);
+
                                 const startX = event.clientX;
                                 const startY = event.clientY;
                                 const initialX = box.x;
