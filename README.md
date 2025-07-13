@@ -1,10 +1,14 @@
-# Background
+# Manual Video Annotation Tool
+
+Demo video -
+
+[![Demo Video](https://img.youtube.com/vi/r6EBCOaYuEo/0.jpg)](https://youtu.be/r6EBCOaYuEo)
 
 ## Features
 
 - Web based (React + Python backend)
-- Server / client interface, so the UI can be exposed over Internet or any network if needed
-- Configuration to specify label types and video files to label
+- Server / client interface, so the UI can be exposed over Internet or local network if needed
+- [Configuration](./configuration_example.yaml) to specify label types and video files
 - Basic security so that anyone with just the URL cannot access your videos
 - Automatic saving
 - Realtime propagation of edits across all open clients
