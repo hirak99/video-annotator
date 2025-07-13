@@ -14,7 +14,7 @@ interface LabelRendererProps {
     handleUpdateBox: (updatedBox: Box) => void;
     setBoxes: (updatedBoxes: Box[]) => void;
     selectedBoxId: string | null;
-    setSelectedBoxId: (id: string) => void;
+    setSelectedBoxId: (id: string | null) => void;
 }
 
 const LabelRenderer: React.FC<LabelRendererProps> = ({
@@ -53,10 +53,10 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                             left: `${box.x / scaleFactorX}px`,
                             width: `${box.width / scaleFactorX - 2 * outlineBorder}px`,
                             height: `${box.height / scaleFactorY - 2 * outlineBorder}px`,
-                            border: `${outlineBorder}px solid ${hashToHSLColor(stringToHash(box.name))}`,
+                            border: `${outlineBorder}px solid ${box.id === selectedBoxId ? 'blue' : hashToHSLColor(stringToHash(box.name))}`,
                             background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`,
                             pointerEvents: 'auto',
-                            boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : undefined,
+                            // boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : undefined,
                             zIndex: box.id === selectedBoxId ? 2 : 1,
                         }}
                         onMouseDown={(event) => {
@@ -98,7 +98,8 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                                     setBoxes(boxes.map(b => b.id === boxId ? box! : b));
                                 };
 
-                                const handleMouseUp = () => {
+                                const handleMouseUp = (event: MouseEvent) => {
+                                    setSelectedBoxId(null);
                                     setIsDragging(false);
                                     document.removeEventListener('mousemove', handleMouseMove);
                                     document.removeEventListener('mouseup', handleMouseUp);

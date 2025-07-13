@@ -52,7 +52,6 @@ const VideoPlayer: React.FC = () => {
         })
         getBackendPromise('/api/video-files').then(response => {
             const videoFiles = response.data;
-            console.log(videoFiles);
             if (videoFiles["needs_login"]) {
                 navigate("/");
             }
