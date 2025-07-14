@@ -46,6 +46,14 @@ class _BoxLabel(pydantic.BaseModel):
     width: float
     height: float
 
+    def model_dump_rounded(self):
+        d = self.model_dump()
+        d["x"] = round(self.x, 2)
+        d["y"] = round(self.y, 2)
+        d["width"] = round(self.width, 2)
+        d["height"] = round(self.height, 2)
+        return d
+
 
 class _AnnotationProps(pydantic.BaseModel):
     # User who created this label.
@@ -147,7 +155,12 @@ def add_common_endpoints(
     def _save_labels(video_id: int, labels: list[_AnnotationProps]):
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
-            json.dump([label.model_dump() for label in labels], f)
+            def dump_label(label):
+                d = label.model_dump()
+                if hasattr(label, "label") and isinstance(label.label, _BoxLabel):
+                    d["label"] = label.label.model_dump_rounded()
+                return d
+            json.dump([dump_label(label) for label in labels], f)
         # Emit a SocketIO event to notify all clients
         try:
             socketio.emit("labels_updated", {"video_id": video_id})
