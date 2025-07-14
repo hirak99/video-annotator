@@ -23,6 +23,7 @@ const VideoPlayer: React.FC = () => {
 
     const [username, setUsername] = useState<string | null>(null);
     const [enableEdit, setEnableEdit] = useState<boolean>(false);
+    const [blinkEdit, setBlinkEdit] = useState<boolean>(false);
     const [boxes, setBoxes] = useState<AnnotationProps[]>([]);
     const lastBackendBoxes = useRef<AnnotationProps[]>([]);
     const [seeking, setSeeking] = useState(false);
@@ -171,6 +172,11 @@ const VideoPlayer: React.FC = () => {
     const setAndUpdateBoxes = (newBoxes: AnnotationProps[]) => {
         if (!enableEdit) {
             setBoxes(lastBackendBoxes.current);
+            // Blink the enableEdit label twice
+            setBlinkEdit(true);
+            setTimeout(() => setBlinkEdit(false), 150);
+            setTimeout(() => setBlinkEdit(true), 300);
+            setTimeout(() => setBlinkEdit(false), 450);
             return;
         }
         setBoxes(newBoxes);
@@ -256,7 +262,9 @@ const VideoPlayer: React.FC = () => {
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                    <label>
+                    <label style={{
+                        textShadow: blinkEdit ? '1px 0 0 red, -1px 0 0 red' : '',
+                    }}>
                         <input
                             type="checkbox"
                             checked={enableEdit}
