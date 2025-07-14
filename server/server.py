@@ -48,7 +48,7 @@ class _BoxLabel(pydantic.BaseModel):
 
 
 class _AnnotationProps(pydantic.BaseModel):
-    # Username who created this label.
+    # User who created this label.
     creator: str
 
     # Following comes from the UI.
@@ -174,6 +174,15 @@ def add_common_endpoints(
     def get_label_types():
         return jsonify(label_types)
 
+    @app.route("/api/current-user", methods=["GET"])
+    @_login_required
+    def get_current_user():
+        username = flask.session.get("username")
+        if username:
+            return jsonify({"username": username})
+        else:
+            return jsonify({"error": "Not logged in"}), 401
+
     @app.route("/api/set-labels/<int:video_id>", methods=["POST"])
     @_login_required
     def set_labels(video_id: int):
@@ -182,12 +191,6 @@ def add_common_endpoints(
             _AnnotationProps.model_validate(label)
             for label in typing.cast(list[dict[str, str]], request.json)
         ]
-
-        # For all new labels, set the creator to the current user.
-        current_label_ids = {label.id for label in _load_labels(video_id)}
-        for label in labels:
-            if label.id not in current_label_ids:
-                label.creator = flask.session["username"]
 
         _save_labels(video_id, labels)
         return jsonify(

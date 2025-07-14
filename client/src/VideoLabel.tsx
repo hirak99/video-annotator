@@ -21,6 +21,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 
 const VideoPlayer: React.FC = () => {
 
+    const [username, setUsername] = useState<string | null>(null);
     const [boxes, setBoxes] = useState<AnnotationProps[]>([]);
     const [seeking, setSeeking] = useState(false);
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
@@ -48,6 +49,13 @@ const VideoPlayer: React.FC = () => {
             setSavingCount(count => Math.max(0, count - 1));
         });
     };
+
+    useEffect(() => {
+        // Fetch the current logged-in username
+        axios.get(`${BACKEND_URL}/api/current-user`)
+            .then(res => setUsername(res.data.username))
+            .catch(() => setUsername(null));
+    }, []);
 
     useEffect(() => {
         getBackendPromise('/api/label-types').then(response => {
@@ -184,7 +192,7 @@ const VideoPlayer: React.FC = () => {
             id: Date.now().toString() + "_" + generateRandomString(7),
             // First of the labelTypes.
             name: labelTypes[0].name,
-            creator: "", // Will be set by backend
+            creator: username || "",
             label: {
                 annotation_type: "Box",
                 start: currentTime,
