@@ -177,7 +177,6 @@ def add_common_endpoints(
     @app.route("/api/set-labels/<int:video_id>", methods=["POST"])
     @_login_required
     def set_labels(video_id: int):
-        logging.info(request.json)
         labels = [
             annotation_types.AnnotationProps.model_validate(label)
             for label in typing.cast(list[dict[str, str]], request.json)
