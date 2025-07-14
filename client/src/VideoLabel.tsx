@@ -171,17 +171,11 @@ const VideoPlayer: React.FC = () => {
     };
 
     const handleDeleteBox = (boxId: string) => {
-        setBoxes(boxes.filter(box => box.id !== boxId));
-        withSaving(
-            axios.delete(`${BACKEND_URL}/api/delete-label/${currentVideoIdx}/${boxId}`)
-        );
+        setAndUpdateBoxes(boxes.filter(box => box.id !== boxId));
     };
 
     const handleUpdateBox = (updatedBox: Box) => {
-        setBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
-        withSaving(
-            axios.put(`${BACKEND_URL}/api/update-label/${currentVideoIdx}/${updatedBox.id}`, updatedBox)
-        );
+        setAndUpdateBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
     };
 
     const addBox = () => {
@@ -197,11 +191,8 @@ const VideoPlayer: React.FC = () => {
             width: 100,
             height: 100,
         };
-        setBoxes([...boxes, newBox]);
+        setAndUpdateBoxes([...boxes, newBox]);
         setSelectedBoxId(newBox.id);
-        withSaving(
-            axios.post(`${BACKEND_URL}/api/add-label/${currentVideoIdx}`, newBox)
-        );
     };
 
     // Prevent window close/navigation if saving is true

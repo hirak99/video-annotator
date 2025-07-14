@@ -93,6 +93,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                 updatedBox.height !== box.height
             ) {
                 const newBoxes = boxes.map((b, i) => i === boxIndex ? updatedBox : b);
+                // Throttled save all edits after a short delay.
                 setAndUpdateBoxes(newBoxes);
             }
         };
