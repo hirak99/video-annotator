@@ -220,6 +220,17 @@ def add_common_endpoints(
     def get_label_types():
         return jsonify(label_types)
 
+    @app.route("/api/set-labels/<int:video_id>", methods=["POST"])
+    @_login_required
+    def set_labels(video_id: int):
+        """
+        Overwrite all labels for a video.
+        Expects JSON body: a list of label objects.
+        """
+        labels = typing.cast(list[_Label], request.json)
+        _save_labels(video_id, labels)
+        return jsonify({"status": "success", "labels": labels})
+
 
 class MainApp:
     def __init__(self):
