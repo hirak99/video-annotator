@@ -119,10 +119,9 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                 if (currentTime < selectedBox.label.start || currentTime > selectedBox.label.end) {
                     return null;
                 }
-                const tipWidth = 200;
-                const tipHeight = 48;
+                const tipWidth = 160;
                 const left = selectedBox.label.x / scaleFactorX;
-                const top = Math.max(0, selectedBox.label.y / scaleFactorY - tipHeight - 8) - 10;
+                const top = (selectedBox.label.y + selectedBox.label.height) / scaleFactorY + 6;
                 return (
                     <div style={{
                         position: 'absolute',
@@ -153,6 +152,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                         key={box.id}
                         data-box-id={box.id}
                         style={{
+                            whiteSpace: 'nowrap',
                             position: 'absolute',
                             top: `${box.label.y / scaleFactorY}px`,
                             left: `${box.label.x / scaleFactorX}px`,
