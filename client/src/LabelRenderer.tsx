@@ -13,6 +13,7 @@ interface LabelRendererProps {
     };
     handleUpdateBox: (updatedBox: Box) => void;
     setBoxes: (updatedBoxes: Box[]) => void;
+    setAndUpdateBoxes: (updatedBoxes: Box[]) => void;
     selectedBoxId: string | null;
     setSelectedBoxId: (id: string | null) => void;
 }
@@ -23,6 +24,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
     videoDimensions,
     handleUpdateBox,
     setBoxes,
+    setAndUpdateBoxes,
     selectedBoxId,
     setSelectedBoxId
 }) => {
@@ -91,14 +93,13 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                 updatedBox.height !== box.height
             ) {
                 const newBoxes = boxes.map((b, i) => i === boxIndex ? updatedBox : b);
-                setBoxes(newBoxes);
-                handleUpdateBox(updatedBox);
+                setAndUpdateBoxes(newBoxes);
             }
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedBoxId, boxes, setBoxes, handleUpdateBox, scaleFactorX, scaleFactorY]);
+    }, [selectedBoxId, boxes, setBoxes, setAndUpdateBoxes, scaleFactorX, scaleFactorY]);
 
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
         const target = event.target as HTMLElement;

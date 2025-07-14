@@ -20,6 +20,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 };
 
 const VideoPlayer: React.FC = () => {
+
     const [boxes, setBoxes] = useState<Box[]>([]);
     const [seeking, setSeeking] = useState(false);
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
@@ -152,6 +153,23 @@ const VideoPlayer: React.FC = () => {
         setLabelError(error);
     }, [boxes, labelTypes]);
 
+    // Utility to set boxes and push to backend (throttled)
+    const throttleTimeout = useRef<NodeJS.Timeout | null>(null);
+    const latestBoxesRef = useRef<Box[]>([]);
+    const setAndUpdateBoxes = (newBoxes: Box[]) => {
+        setBoxes(newBoxes);
+        latestBoxesRef.current = newBoxes;
+        if (throttleTimeout.current) {
+            clearTimeout(throttleTimeout.current);
+        }
+        throttleTimeout.current = setTimeout(() => {
+            withSaving(
+                axios.post(`${BACKEND_URL}/api/set-labels/${currentVideoIdx}`, latestBoxesRef.current)
+            );
+            throttleTimeout.current = null;
+        }, 1500);
+    };
+
     const handleDeleteBox = (boxId: string) => {
         setBoxes(boxes.filter(box => box.id !== boxId));
         withSaving(
@@ -271,6 +289,7 @@ const VideoPlayer: React.FC = () => {
                             videoDimensions={videoDimensions}
                             handleUpdateBox={handleUpdateBox}
                             setBoxes={setBoxes}
+                            setAndUpdateBoxes={setAndUpdateBoxes}
                             selectedBoxId={selectedBoxId}
                             setSelectedBoxId={setSelectedBoxId}
                         />
