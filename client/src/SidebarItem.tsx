@@ -32,15 +32,15 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
     const handleSetStart = () => {
         // If the start is less than end, set newEndTime to start + 1.
-        const newEndTime = currentTime >= box.end ? currentTime + 1 : box.end;
-        onUpdateBox({ ...box, start: currentTime, end: newEndTime });
+        const newEndTime = currentTime >= box.annotation.end ? currentTime + 1 : box.annotation.end;
+        onUpdateBox({ ...box, annotation: { ...box.annotation, start: currentTime, end: newEndTime } });
     };
 
     const handleSetEnd = () => {
-        onUpdateBox({ ...box, end: currentTime });
+        onUpdateBox({ ...box, annotation: { ...box.annotation, end: currentTime } });
     };
 
-    const isVisible = currentTime >= box.start && currentTime <= box.end;
+    const isVisible = currentTime >= box.annotation.start && currentTime <= box.annotation.end;
 
     const handleClickSeekTime = (target: EventTarget, box: Box) => {
         if (target instanceof HTMLButtonElement) {
@@ -48,8 +48,8 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
             // Buttons already do some action, like setting the time or deleting - and they can semantically conflict with seeking.
             return;
         }
-        if (currentTime < box.start || currentTime > box.end) {
-            seekToTime(box.start);
+        if (currentTime < box.annotation.start || currentTime > box.annotation.end) {
+            seekToTime(box.annotation.start);
         }
     };
 
@@ -98,7 +98,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 padding: '2px 10px',
                 marginLeft: 'auto',
             }} aria-label="Set Start Time">
-                <span style={{ marginRight: '5px', position: 'relative', top: '-1px' }}>⧯</span> {formatTime(box.start)}
+                <span style={{ marginRight: '5px', position: 'relative', top: '-1px' }}>⧯</span> {formatTime(box.annotation.start)}
             </button>
 
             {/* End Time */}
@@ -106,7 +106,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 padding: '2px 10px',
                 marginRight: 'auto',
             }} aria-label="Set End Time">
-                {formatTime(box.end)} <span style={{ marginLeft: '5px', position: 'relative', top: '-1px' }}>⧯</span>
+                {formatTime(box.annotation.end)} <span style={{ marginLeft: '5px', position: 'relative', top: '-1px' }}>⧯</span>
             </button>
 
             {/* Delete */}

@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 import typing
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 import flask
 from flask import jsonify
@@ -35,19 +35,26 @@ class _VideoFile(TypedDict):
     label_file: str
 
 
-class _Label(pydantic.BaseModel):
-    # Username who created this label.
-    creator: str
+class _BoxLabel(pydantic.BaseModel):
+    # Unique type identifier for Pydantic to load this from JSON.
+    annotation_type: Literal["Box"] = "Box"
 
-    # Following fields come from the UI.
-    id: str
-    name: str
     start: float
     end: float
     x: float
     y: float
     width: float
     height: float
+
+
+class _Label(pydantic.BaseModel):
+    # Username who created this label.
+    creator: str
+
+    # Following comes from the UI.
+    id: str
+    name: str
+    annotation: _BoxLabel
 
 
 # Unused functions for flask endpoints.

@@ -128,7 +128,7 @@ const VideoPlayer: React.FC = () => {
                 if (!overlappingLabels[box.name]) {
                     overlappingLabels[box.name] = [];
                 }
-                overlappingLabels[box.name].push({ start: box.start, end: box.end, id: box.id });
+                overlappingLabels[box.name].push({ start: box.annotation.start, end: box.annotation.end, id: box.id });
             }
         }
 
@@ -179,17 +179,21 @@ const VideoPlayer: React.FC = () => {
     };
 
     const addBox = () => {
-        const newBox = {
+        const newBox: Box = {
             // Date includes milliseconds. Add a random str anyway, to make collisions practically impossible.
             id: Date.now().toString() + "_" + generateRandomString(7),
             // First of the labelTypes.
             name: labelTypes[0].name,
-            start: currentTime,
-            end: currentTime + 10, // Assuming a default duration for a new box
-            x: 50,
-            y: 50,
-            width: 100,
-            height: 100,
+            creator: "", // Will be set by backend
+            annotation: {
+                annotation_type: "Box",
+                start: currentTime,
+                end: currentTime + 10, // Assuming a default duration for a new box
+                x: 50,
+                y: 50,
+                width: 100,
+                height: 100,
+            }
         };
         setAndUpdateBoxes([...boxes, newBox]);
         setSelectedBoxId(newBox.id);
