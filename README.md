@@ -21,11 +21,12 @@ Following are a few examples.
 - **On the fly MKV to MP4 conversion** to increase browser compatibility. However, full transcoding is not yet supported and must be done as a pre-step if needed.
 - **Basic security** to restic video access to users who have the correct password. However, this is not intended for high-security environments.
 - **Real time error hints** to help the user know and correct errors in labeling as they occur. For example, if a label that should be unique is seen to be in two places simultaneously in any frame.
-- **Keyboard shortcuts** for precise alignment and resizing.
+- **Keyboard shortcuts** for precise alignment and resizing, with contextual tooltips.
 - **Precise media seek controls** for aligning the annotations in time.
 - **Several ways to track the label on the video against the sidebar** including clicking and selecting, a matching number shown in both, dimming of videos not shown, and seek on click if a label is not currently visible.
 - **Visual feedback** when it is saving (top left) or skipping the video via seek buttons (overlay on the video).
 - **Backend calls are consolidated** for keyboard edits to save making numerous calls in short succession if user presses and holds down a key.
+- **Editing needs to be enabled** with a checkbox to prevent inadvertent data loss.
 
 ### What it does not do
 
