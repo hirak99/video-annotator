@@ -413,6 +413,20 @@ const VideoPlayer: React.FC = () => {
                             />
                         ))}
                     </div>
+
+                    {/* Sort button */}
+                    <button
+                        style={{ margin: '10px 0 0 auto', display: 'block' }}
+                        onClick={() => {
+                            setAndUpdateBoxes(boxes.sort((a, b) => {
+                                if (a.name < b.name) return -1;
+                                if (a.name > b.name) return 1;
+                                return a.label.start - b.label.start;
+                            }));
+                        }}
+                    >
+                        Sort
+                    </button>
                 </div> {/* End of sidebar */}
             </div>
         </div>
