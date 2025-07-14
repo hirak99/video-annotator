@@ -195,12 +195,13 @@ const VideoPlayer: React.FC = () => {
         setSelectedBoxId(newBox.id);
     };
 
-    // Prevent window close/navigation if saving is true
+    // Prevent window close/navigation if saving is true or a save is scheduled
     React.useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
             e.preventDefault();
         };
-        if (saving) {
+        const shouldPrevent = saving || throttleTimeout.current !== null;
+        if (shouldPrevent) {
             window.addEventListener('beforeunload', handleBeforeUnload);
         } else {
             window.removeEventListener('beforeunload', handleBeforeUnload);
