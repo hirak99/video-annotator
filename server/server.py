@@ -11,6 +11,7 @@ from flask import jsonify
 from flask import request
 import flask_cors
 import flask_socketio
+import pydantic
 import yaml
 
 from . import annotation_types
@@ -159,9 +160,14 @@ def add_common_endpoints(
         for video_id, video in enumerate(video_files):
             file_desc.append(video.copy())
             file_desc[-1]["video_file"] = os.path.basename(video["video_file"])
-            label_count = len(_load_labels(video_id))
-            if label_count > 0:
-                file_desc[-1]["video_file"] += f" ({label_count} label{'s' if label_count > 1 else ''} at last refresh)"
+            try:
+                label_count = len(_load_labels(video_id))
+                if label_count > 0:
+                    file_desc[-1][
+                        "video_file"
+                    ] += f" ({label_count} label{'s' if label_count > 1 else ''} at last refresh)"
+            except pydantic.ValidationError:
+                file_desc[-1]["video_file"] += " (error loading labels)"
         return jsonify(file_desc)
 
     @app.route("/api/label-types", methods=["GET"])
