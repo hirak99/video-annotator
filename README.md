@@ -53,7 +53,7 @@ After cloning, install the necessary packages. You may optionally install and ru
 
 ```sh
 # Install necessary python modules.
-pip install flask flask_cors flask_socketio gunicorn
+pip install flask flask_cors flask_socketio gunicorn pydantic
 
 # One time install of node modules.
 (cd client && npm install)

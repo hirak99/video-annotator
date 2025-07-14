@@ -11,6 +11,7 @@ from flask import jsonify
 from flask import request
 import flask_cors
 import flask_socketio
+import pydantic
 import yaml
 
 _CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
@@ -34,7 +35,7 @@ class _VideoFile(TypedDict):
     label_file: str
 
 
-class _Label(TypedDict):
+class _Label(pydantic.BaseModel):
     # Username who created this label.
     creator: str
 
@@ -132,14 +133,14 @@ def add_common_endpoints(
         labels_file = video_files[video_id]["label_file"]
         if os.path.exists(labels_file):
             with open(labels_file, "r") as f:
-                return json.load(f)
+                return [_Label.model_validate(obj) for obj in json.load(f)]
         return []
 
     # Simple function to save labels to a JSON file
     def _save_labels(video_id: int, labels: list[_Label]):
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
-            json.dump(labels, f)
+            json.dump([label.model_dump() for label in labels], f)
         # Emit a SocketIO event to notify all clients
         try:
             socketio.emit("labels_updated", {"video_id": video_id})
@@ -149,7 +150,8 @@ def add_common_endpoints(
     @app.route("/api/labels/<int:video_id>", methods=["GET"])
     @_login_required
     def get_labels(video_id):
-        return jsonify(_load_labels(video_id))
+        labels = _load_labels(video_id)
+        return jsonify([label.model_dump() for label in labels])
 
     @app.route("/api/video-files", methods=["GET"])
     @_login_required
@@ -168,16 +170,22 @@ def add_common_endpoints(
     @app.route("/api/set-labels/<int:video_id>", methods=["POST"])
     @_login_required
     def set_labels(video_id: int):
-        labels = typing.cast(list[_Label], request.json)
+        logging.info(request.json)
+        labels = [
+            _Label.model_validate(label)
+            for label in typing.cast(list[dict[str, str]], request.json)
+        ]
 
         # For all new labels, set the creator to the current user.
-        current_label_ids = [label["id"] for label in _load_labels(video_id)]
+        current_label_ids = {label.id for label in _load_labels(video_id)}
         for label in labels:
-            if label["id"] not in current_label_ids:
-                label["creator"] = flask.session["username"]
+            if label.id not in current_label_ids:
+                label.creator = flask.session["username"]
 
         _save_labels(video_id, labels)
-        return jsonify({"status": "success", "labels": labels})
+        return jsonify(
+            {"status": "success", "labels": [label.model_dump() for label in labels]}
+        )
 
 
 class MainApp:
