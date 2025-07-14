@@ -267,7 +267,6 @@ const VideoPlayer: React.FC = () => {
                             controls
                             controlsList='nofullscreen'  // Seems Firefox does not respect this.
                             disablePictureInPicture
-                            autoPlay
                             muted
                             onTimeUpdate={handleTimeUpdate}
                             onLoadedMetadata={handleVideoLoad}
