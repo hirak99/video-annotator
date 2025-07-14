@@ -38,10 +38,10 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
         if (!selectedBoxId) return;
 
         const handleKeyDown = (event: KeyboardEvent) => {
-            // Only act if a box is selected and no input is focused
-            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || (document.activeElement as HTMLElement).isContentEditable)) {
-                return;
-            }
+            // // Only act if a box is selected and no input is focused
+            // if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || (document.activeElement as HTMLElement).isContentEditable)) {
+            //     return;
+            // }
 
             const boxIndex = boxes.findIndex(b => b.id === selectedBoxId);
             if (boxIndex === -1) return;
@@ -75,22 +75,23 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
             // Prevent scrolling
             event.preventDefault();
 
-            let updatedBox = { ...box, annotation: { ...box.label } };
+            // Deepcopy the label, which has location and size.
+            let updatedBox = { ...box, label: { ...box.label } };
             if (dx !== 0 || dy !== 0) {
-                updatedBox.annotation.x = Math.max(0, box.label.x + dx * scaleFactorX);
-                updatedBox.annotation.y = Math.max(0, box.label.y + dy * scaleFactorY);
+                updatedBox.label.x += dx * scaleFactorX;
+                updatedBox.label.y += dy * scaleFactorY;
             }
             if (dWidth !== 0 || dHeight !== 0) {
-                updatedBox.annotation.width = Math.max(1, box.label.width + dWidth * scaleFactorX);
-                updatedBox.annotation.height = Math.max(1, box.label.height + dHeight * scaleFactorY);
+                updatedBox.label.width += dWidth * scaleFactorX;
+                updatedBox.label.height += dHeight * scaleFactorY;
             }
 
             // Only update if something changed
             if (
-                updatedBox.annotation.x !== box.label.x ||
-                updatedBox.annotation.y !== box.label.y ||
-                updatedBox.annotation.width !== box.label.width ||
-                updatedBox.annotation.height !== box.label.height
+                updatedBox.label.x !== box.label.x ||
+                updatedBox.label.y !== box.label.y ||
+                updatedBox.label.width !== box.label.width ||
+                updatedBox.label.height !== box.label.height
             ) {
                 const newBoxes = boxes.map((b, i) => i === boxIndex ? updatedBox : b);
                 // Throttled save all edits after a short delay.
