@@ -6,7 +6,7 @@ import { io, Socket } from "socket.io-client";
 import { AnnotationProps, LabelType } from './types';
 import LabelRenderer from './LabelRenderer';
 import { useNavigate } from 'react-router';
-import {generateRandomString } from './utils'
+import { generateRandomString } from './utils'
 
 axios.defaults.withCredentials = true;
 
@@ -22,7 +22,9 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 const VideoPlayer: React.FC = () => {
 
     const [username, setUsername] = useState<string | null>(null);
+    const [enableEdit, setEnableEdit] = useState<boolean>(false);
     const [boxes, setBoxes] = useState<AnnotationProps[]>([]);
+    const lastBackendBoxes = useRef<AnnotationProps[]>([]);
     const [seeking, setSeeking] = useState(false);
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
     const [labelError, setLabelError] = useState<string>("");
@@ -81,6 +83,7 @@ const VideoPlayer: React.FC = () => {
             if (data.video_id === currentVideoIdx) {
                 getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
                     setBoxes(response.data);
+                    lastBackendBoxes.current = response.data;
                 });
             }
         });
@@ -92,6 +95,7 @@ const VideoPlayer: React.FC = () => {
     useEffect(() => {
         getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
             setBoxes(response.data);  // Get labeled boxes data for the current video
+            lastBackendBoxes.current = response.data;
         });
     }, [currentVideoIdx]);
 
@@ -165,6 +169,10 @@ const VideoPlayer: React.FC = () => {
     const throttleTimeout = useRef<NodeJS.Timeout | null>(null);
     const latestBoxesRef = useRef<AnnotationProps[]>([]);
     const setAndUpdateBoxes = (newBoxes: AnnotationProps[]) => {
+        if (!enableEdit) {
+            setBoxes(lastBackendBoxes.current);
+            return;
+        }
         setBoxes(newBoxes);
         latestBoxesRef.current = newBoxes;
         if (throttleTimeout.current) {
@@ -246,7 +254,19 @@ const VideoPlayer: React.FC = () => {
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                    <label>
+                        <input
+                            type="checkbox"
+                            checked={enableEdit}
+                            onChange={e => setEnableEdit(e.target.checked)}
+                            style={{ marginRight: '6px' }}
+                        />
+                        {!enableEdit && <span style={{ color: "red", marginLeft: "5px" }}>Editing disabled for safety. Click to enable.</span>}
+                        {enableEdit && <span style={{ color: "green", marginLeft: "5px" }}>Editing enabled and will be auto saved.</span>}
+                    </label>
+                </div>
                 <button onClick={() => { navigate("/"); }}>Logout</button>
             </div>
             {/* List of videos */}
