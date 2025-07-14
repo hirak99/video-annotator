@@ -4,15 +4,16 @@ import logging
 import os
 import subprocess
 import typing
-from typing import Literal, TypedDict
+from typing import TypedDict
 
 import flask
 from flask import jsonify
 from flask import request
 import flask_cors
 import flask_socketio
-import pydantic
 import yaml
+
+from . import annotation_types
 
 _CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
 
@@ -33,36 +34,6 @@ class _LabelProperties(TypedDict):
 class _VideoFile(TypedDict):
     video_file: str
     label_file: str
-
-
-class _BoxLabel(pydantic.BaseModel):
-    # Unique type identifier for Pydantic to load this from JSON.
-    annotation_type: Literal["Box"] = "Box"
-
-    start: float
-    end: float
-    x: float
-    y: float
-    width: float
-    height: float
-
-    def model_dump_rounded(self):
-        d = self.model_dump()
-        d["x"] = round(self.x, 2)
-        d["y"] = round(self.y, 2)
-        d["width"] = round(self.width, 2)
-        d["height"] = round(self.height, 2)
-        return d
-
-
-class _AnnotationProps(pydantic.BaseModel):
-    # User who created this label.
-    creator: str
-
-    # Following comes from the UI.
-    id: str
-    name: str
-    label: _BoxLabel
 
 
 # Unused functions for flask endpoints.
@@ -144,22 +115,29 @@ def add_common_endpoints(
     socketio: flask_socketio.SocketIO,
 ):
     # Simple function to get labels from a JSON file
-    def _load_labels(video_id: int) -> list[_AnnotationProps]:
+    def _load_labels(video_id: int) -> list[annotation_types.AnnotationProps]:
         labels_file = video_files[video_id]["label_file"]
         if os.path.exists(labels_file):
             with open(labels_file, "r") as f:
-                return [_AnnotationProps.model_validate(obj) for obj in json.load(f)]
+                return [
+                    annotation_types.AnnotationProps.model_validate(obj)
+                    for obj in json.load(f)
+                ]
         return []
 
     # Simple function to save labels to a JSON file
-    def _save_labels(video_id: int, labels: list[_AnnotationProps]):
+    def _save_labels(video_id: int, labels: list[annotation_types.AnnotationProps]):
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
+
             def dump_label(label):
                 d = label.model_dump()
-                if hasattr(label, "label") and isinstance(label.label, _BoxLabel):
+                if hasattr(label, "label") and isinstance(
+                    label.label, annotation_types.BoxLabel
+                ):
                     d["label"] = label.label.model_dump_rounded()
                 return d
+
             json.dump([dump_label(label) for label in labels], f)
         # Emit a SocketIO event to notify all clients
         try:
@@ -201,7 +179,7 @@ def add_common_endpoints(
     def set_labels(video_id: int):
         logging.info(request.json)
         labels = [
-            _AnnotationProps.model_validate(label)
+            annotation_types.AnnotationProps.model_validate(label)
             for label in typing.cast(list[dict[str, str]], request.json)
         ]
 
