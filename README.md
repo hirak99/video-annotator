@@ -26,7 +26,7 @@ Following are a few examples.
 - **Several ways to track the label on the video against the sidebar** including clicking and selecting, a matching number shown in both, dimming of videos not shown, and seek on click if a label is not currently visible.
 - **Visual feedback** when it is saving (top left) or skipping the video via seek buttons (overlay on the video).
 - **Backend calls are consolidated** for keyboard edits to save making numerous calls in short succession if user presses and holds down a key.
-- **Editing needs to be enabled** with a checkbox to prevent inadvertent data loss.
+- **Safety mechanism for edits** disables editing by default on load, easily disengaged on clicking the button to start editing.
 
 ### What it does not do
 
