@@ -183,7 +183,7 @@ const VideoPlayer: React.FC = () => {
                 axios.post(`${BACKEND_URL}/api/set-labels/${currentVideoIdx}`, latestBoxesRef.current)
             );
             throttleTimeout.current = null;
-        }, 1500);
+        }, 500);
     };
 
     const handleDeleteBox = (boxId: string) => {
