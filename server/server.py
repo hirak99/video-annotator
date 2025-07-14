@@ -47,14 +47,14 @@ class _BoxLabel(pydantic.BaseModel):
     height: float
 
 
-class _Label(pydantic.BaseModel):
+class _AnnotationProps(pydantic.BaseModel):
     # Username who created this label.
     creator: str
 
     # Following comes from the UI.
     id: str
     name: str
-    annotation: _BoxLabel
+    label: _BoxLabel
 
 
 # Unused functions for flask endpoints.
@@ -136,15 +136,15 @@ def add_common_endpoints(
     socketio: flask_socketio.SocketIO,
 ):
     # Simple function to get labels from a JSON file
-    def _load_labels(video_id: int) -> list[_Label]:
+    def _load_labels(video_id: int) -> list[_AnnotationProps]:
         labels_file = video_files[video_id]["label_file"]
         if os.path.exists(labels_file):
             with open(labels_file, "r") as f:
-                return [_Label.model_validate(obj) for obj in json.load(f)]
+                return [_AnnotationProps.model_validate(obj) for obj in json.load(f)]
         return []
 
     # Simple function to save labels to a JSON file
-    def _save_labels(video_id: int, labels: list[_Label]):
+    def _save_labels(video_id: int, labels: list[_AnnotationProps]):
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
             json.dump([label.model_dump() for label in labels], f)
@@ -179,7 +179,7 @@ def add_common_endpoints(
     def set_labels(video_id: int):
         logging.info(request.json)
         labels = [
-            _Label.model_validate(label)
+            _AnnotationProps.model_validate(label)
             for label in typing.cast(list[dict[str, str]], request.json)
         ]
 

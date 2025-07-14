@@ -3,7 +3,7 @@ import ResizeObserver from 'resize-observer-polyfill';
 import axios from 'axios';
 import SidebarItem from './SidebarItem';
 import { io, Socket } from "socket.io-client";
-import { Box, LabelType } from './types';
+import { AnnotationProps, LabelType } from './types';
 import LabelRenderer from './LabelRenderer';
 import { useNavigate } from 'react-router';
 import {generateRandomString } from './utils'
@@ -21,7 +21,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 
 const VideoPlayer: React.FC = () => {
 
-    const [boxes, setBoxes] = useState<Box[]>([]);
+    const [boxes, setBoxes] = useState<AnnotationProps[]>([]);
     const [seeking, setSeeking] = useState(false);
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
     const [labelError, setLabelError] = useState<string>("");
@@ -128,7 +128,7 @@ const VideoPlayer: React.FC = () => {
                 if (!overlappingLabels[box.name]) {
                     overlappingLabels[box.name] = [];
                 }
-                overlappingLabels[box.name].push({ start: box.annotation.start, end: box.annotation.end, id: box.id });
+                overlappingLabels[box.name].push({ start: box.label.start, end: box.label.end, id: box.id });
             }
         }
 
@@ -155,8 +155,8 @@ const VideoPlayer: React.FC = () => {
 
     // Utility to set boxes and push to backend (throttled)
     const throttleTimeout = useRef<NodeJS.Timeout | null>(null);
-    const latestBoxesRef = useRef<Box[]>([]);
-    const setAndUpdateBoxes = (newBoxes: Box[]) => {
+    const latestBoxesRef = useRef<AnnotationProps[]>([]);
+    const setAndUpdateBoxes = (newBoxes: AnnotationProps[]) => {
         setBoxes(newBoxes);
         latestBoxesRef.current = newBoxes;
         if (throttleTimeout.current) {
@@ -174,18 +174,18 @@ const VideoPlayer: React.FC = () => {
         setAndUpdateBoxes(boxes.filter(box => box.id !== boxId));
     };
 
-    const handleUpdateBox = (updatedBox: Box) => {
+    const handleUpdateBox = (updatedBox: AnnotationProps) => {
         setAndUpdateBoxes(boxes.map(box => box.id === updatedBox.id ? updatedBox : box));
     };
 
     const addBox = () => {
-        const newBox: Box = {
+        const newBox: AnnotationProps = {
             // Date includes milliseconds. Add a random str anyway, to make collisions practically impossible.
             id: Date.now().toString() + "_" + generateRandomString(7),
             // First of the labelTypes.
             name: labelTypes[0].name,
             creator: "", // Will be set by backend
-            annotation: {
+            label: {
                 annotation_type: "Box",
                 start: currentTime,
                 end: currentTime + 10, // Assuming a default duration for a new box

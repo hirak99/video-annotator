@@ -1,4 +1,4 @@
-import { Box, LabelType } from './types';
+import { AnnotationProps, LabelType } from './types';
 
 const formatTime = (seconds: number): string => {
     const minutes = Math.floor(seconds / 60);
@@ -9,8 +9,8 @@ const formatTime = (seconds: number): string => {
 interface SidebarItemProps {
     index: number;
     labelTypes: LabelType[];
-    box: Box;
-    onUpdateBox: (updatedBox: Box) => void;
+    box: AnnotationProps;
+    onUpdateBox: (updatedBox: AnnotationProps) => void;
     onDeleteBox: (boxId: string) => void;
     currentTime: number;
     selectedBoxId: string | null;
@@ -32,24 +32,24 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
 
     const handleSetStart = () => {
         // If the start is less than end, set newEndTime to start + 1.
-        const newEndTime = currentTime >= box.annotation.end ? currentTime + 1 : box.annotation.end;
-        onUpdateBox({ ...box, annotation: { ...box.annotation, start: currentTime, end: newEndTime } });
+        const newEndTime = currentTime >= box.label.end ? currentTime + 1 : box.label.end;
+        onUpdateBox({ ...box, label: { ...box.label, start: currentTime, end: newEndTime } });
     };
 
     const handleSetEnd = () => {
-        onUpdateBox({ ...box, annotation: { ...box.annotation, end: currentTime } });
+        onUpdateBox({ ...box, label: { ...box.label, end: currentTime } });
     };
 
-    const isVisible = currentTime >= box.annotation.start && currentTime <= box.annotation.end;
+    const isVisible = currentTime >= box.label.start && currentTime <= box.label.end;
 
-    const handleClickSeekTime = (target: EventTarget, box: Box) => {
+    const handleClickSeekTime = (target: EventTarget, box: AnnotationProps) => {
         if (target instanceof HTMLButtonElement) {
             // Do not seek on button clicks.
             // Buttons already do some action, like setting the time or deleting - and they can semantically conflict with seeking.
             return;
         }
-        if (currentTime < box.annotation.start || currentTime > box.annotation.end) {
-            seekToTime(box.annotation.start);
+        if (currentTime < box.label.start || currentTime > box.label.end) {
+            seekToTime(box.label.start);
         }
     };
 
@@ -98,7 +98,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 padding: '2px 10px',
                 marginLeft: 'auto',
             }} aria-label="Set Start Time">
-                <span style={{ marginRight: '5px', position: 'relative', top: '-1px' }}>⧯</span> {formatTime(box.annotation.start)}
+                <span style={{ marginRight: '5px', position: 'relative', top: '-1px' }}>⧯</span> {formatTime(box.label.start)}
             </button>
 
             {/* End Time */}
@@ -106,7 +106,7 @@ const SidebarItem: React.FC<SidebarItemProps> = ({
                 padding: '2px 10px',
                 marginRight: 'auto',
             }} aria-label="Set End Time">
-                {formatTime(box.annotation.end)} <span style={{ marginLeft: '5px', position: 'relative', top: '-1px' }}>⧯</span>
+                {formatTime(box.label.end)} <span style={{ marginLeft: '5px', position: 'relative', top: '-1px' }}>⧯</span>
             </button>
 
             {/* Delete */}

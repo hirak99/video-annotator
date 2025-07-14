@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Box } from './types';
+import { AnnotationProps } from './types';
 import { hashToHSLColor, stringToHash } from './utils';
 
 interface LabelRendererProps {
-    boxes: Box[];
+    boxes: AnnotationProps[];
     currentTime: number;
     videoDimensions: {
         naturalWidth: number;
@@ -11,9 +11,9 @@ interface LabelRendererProps {
         displayWidth: number;
         displayHeight: number;
     };
-    handleUpdateBox: (updatedBox: Box) => void;
-    setBoxes: (updatedBoxes: Box[]) => void;
-    setAndUpdateBoxes: (updatedBoxes: Box[]) => void;
+    handleUpdateBox: (updatedBox: AnnotationProps) => void;
+    setBoxes: (updatedBoxes: AnnotationProps[]) => void;
+    setAndUpdateBoxes: (updatedBoxes: AnnotationProps[]) => void;
     selectedBoxId: string | null;
     setSelectedBoxId: (id: string | null) => void;
 }
@@ -75,22 +75,22 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
             // Prevent scrolling
             event.preventDefault();
 
-            let updatedBox = { ...box, annotation: { ...box.annotation } };
+            let updatedBox = { ...box, annotation: { ...box.label } };
             if (dx !== 0 || dy !== 0) {
-                updatedBox.annotation.x = Math.max(0, box.annotation.x + dx * scaleFactorX);
-                updatedBox.annotation.y = Math.max(0, box.annotation.y + dy * scaleFactorY);
+                updatedBox.annotation.x = Math.max(0, box.label.x + dx * scaleFactorX);
+                updatedBox.annotation.y = Math.max(0, box.label.y + dy * scaleFactorY);
             }
             if (dWidth !== 0 || dHeight !== 0) {
-                updatedBox.annotation.width = Math.max(1, box.annotation.width + dWidth * scaleFactorX);
-                updatedBox.annotation.height = Math.max(1, box.annotation.height + dHeight * scaleFactorY);
+                updatedBox.annotation.width = Math.max(1, box.label.width + dWidth * scaleFactorX);
+                updatedBox.annotation.height = Math.max(1, box.label.height + dHeight * scaleFactorY);
             }
 
             // Only update if something changed
             if (
-                updatedBox.annotation.x !== box.annotation.x ||
-                updatedBox.annotation.y !== box.annotation.y ||
-                updatedBox.annotation.width !== box.annotation.width ||
-                updatedBox.annotation.height !== box.annotation.height
+                updatedBox.annotation.x !== box.label.x ||
+                updatedBox.annotation.y !== box.label.y ||
+                updatedBox.annotation.width !== box.label.width ||
+                updatedBox.annotation.height !== box.label.height
             ) {
                 const newBoxes = boxes.map((b, i) => i === boxIndex ? updatedBox : b);
                 // Throttled save all edits after a short delay.
@@ -113,17 +113,17 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: isDragging ? 'auto' : 'none' }}>
             {boxes
                 .map((box, originalIndex) => ({ ...box, originalIndex }))
-                .filter(box => currentTime >= box.annotation.start && currentTime <= box.annotation.end)
+                .filter(box => currentTime >= box.label.start && currentTime <= box.label.end)
                 .map(box => (
                     <div
                         key={box.id}
                         data-box-id={box.id}
                         style={{
                             position: 'absolute',
-                            top: `${box.annotation.y / scaleFactorY}px`,
-                            left: `${box.annotation.x / scaleFactorX}px`,
-                            width: `${box.annotation.width / scaleFactorX - 2 * outlineBorder}px`,
-                            height: `${box.annotation.height / scaleFactorY - 2 * outlineBorder}px`,
+                            top: `${box.label.y / scaleFactorY}px`,
+                            left: `${box.label.x / scaleFactorX}px`,
+                            width: `${box.label.width / scaleFactorX - 2 * outlineBorder}px`,
+                            height: `${box.label.height / scaleFactorY - 2 * outlineBorder}px`,
                             border: `${outlineBorder}px solid ${hashToHSLColor(stringToHash(box.name))}`,
                             background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`,
                             pointerEvents: 'auto',
@@ -146,10 +146,10 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
 
                                 const startX = event.clientX;
                                 const startY = event.clientY;
-                                const initialX = box.annotation.x;
-                                const initialY = box.annotation.y;
-                                const initialWidth = box.annotation.width;
-                                const initialHeight = box.annotation.height;
+                                const initialX = box.label.x;
+                                const initialY = box.label.y;
+                                const initialWidth = box.label.width;
+                                const initialHeight = box.label.height;
 
                                 const isBottomRight = isEventAtBottomRight(event);
 
@@ -163,11 +163,11 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                                     if (isBottomRight) {
                                         let newWidth = initialWidth + deltaX * scaleFactorX;
                                         let newHeight = initialHeight + deltaY * scaleFactorY;
-                                        box = { ...box!, annotation: { ...box!.annotation, width: newWidth, height: newHeight } };
+                                        box = { ...box!, label: { ...box!.label, width: newWidth, height: newHeight } };
                                     } else {
                                         const newX = initialX + deltaX * scaleFactorX;
                                         const newY = initialY + deltaY * scaleFactorY;
-                                        box = { ...box!, annotation: { ...box!.annotation, x: newX, y: newY } };
+                                        box = { ...box!, label: { ...box!.label, x: newX, y: newY } };
                                     }
                                     setBoxes(boxes.map(b => b.id === boxId ? box! : b));
                                 };

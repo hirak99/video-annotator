@@ -8,12 +8,11 @@ export interface BoxLabel {
   height: number;
 }
 
-// TODO: Change this to Annotation later.
-export interface Box {
+export interface AnnotationProps {
   creator: string;
   id: string;
   name: string;
-  annotation: BoxLabel;
+  label: BoxLabel;
 }
 
 export interface LabelType {
