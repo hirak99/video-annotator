@@ -375,6 +375,7 @@ const VideoPlayer: React.FC = () => {
                         padding: '10px',
                         borderLeft: '1px solid #ccc',
                         overflowY: 'auto',
+                        maxHeight: '100vh',
                     }}
                 >
                     <div style={{
