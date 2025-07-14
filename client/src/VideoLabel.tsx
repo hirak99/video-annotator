@@ -263,8 +263,8 @@ const VideoPlayer: React.FC = () => {
                             onChange={e => setEnableEdit(e.target.checked)}
                             style={{ marginRight: '6px' }}
                         />
-                        {!enableEdit && <span style={{ color: "red", marginLeft: "5px" }}>Editing disabled for safety. Click to enable.</span>}
-                        {enableEdit && <span style={{ color: "green", marginLeft: "5px" }}>Editing enabled and will be auto saved.</span>}
+                        {!enableEdit && <span style={{ color: "red", marginLeft: "5px" }}>For safety, EDITING IS DISABLED. Click to enable.</span>}
+                        {enableEdit && <span style={{ color: "green", marginLeft: "5px" }}>Editing is now enabled.</span>}
                     </label>
                 </div>
                 <button onClick={() => { navigate("/"); }}>Logout</button>
