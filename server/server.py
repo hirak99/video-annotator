@@ -155,11 +155,14 @@ def add_common_endpoints(
     @_login_required
     def get_video_files():
         # Return video files without the path.
-        without_path: list[_VideoFile] = []
-        for video in video_files:
-            without_path.append(video.copy())
-            without_path[-1]["video_file"] = os.path.basename(video["video_file"])
-        return jsonify(without_path)
+        file_desc: list[_VideoFile] = []
+        for video_id, video in enumerate(video_files):
+            file_desc.append(video.copy())
+            file_desc[-1]["video_file"] = os.path.basename(video["video_file"])
+            label_count = len(_load_labels(video_id))
+            if label_count > 0:
+                file_desc[-1]["video_file"] += f" ({label_count} label{'s' if label_count > 1 else ''} at last refresh)"
+        return jsonify(file_desc)
 
     @app.route("/api/label-types", methods=["GET"])
     def get_label_types():
