@@ -27,6 +27,7 @@ const VideoPlayer: React.FC = () => {
     const [boxes, setBoxes] = useState<AnnotationProps[]>([]);
     const lastBackendBoxes = useRef<AnnotationProps[]>([]);
     const [seeking, setSeeking] = useState(false);
+    const [loading, setLoading] = useState(true); // New loading state
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
     const [labelError, setLabelError] = useState<string>("");
     const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
@@ -112,6 +113,7 @@ const VideoPlayer: React.FC = () => {
             displayWidth: video.clientWidth,
             displayHeight: video.clientHeight
         });
+        setLoading(false); // Video is ready, stop loading
     };
 
     useEffect(() => {
@@ -258,6 +260,16 @@ const VideoPlayer: React.FC = () => {
         };
     }, []);
 
+    // Set loading to true when currentVideoIdx changes (new video selected)
+    useEffect(() => {
+        setLoading(true);
+    }, [currentVideoIdx]);
+
+    // Optionally, set loading to false on error (not strictly required, but for robustness)
+    const handleVideoError = () => {
+        setLoading(false);
+    };
+
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -298,12 +310,19 @@ const VideoPlayer: React.FC = () => {
                             muted
                             onTimeUpdate={handleTimeUpdate}
                             onLoadedMetadata={handleVideoLoad}
+                            onError={handleVideoError}
                             style={{ width: '100%', backgroundColor: 'black' }}
                         />
 
                         {saving &&
                             <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
                                 Saving...
+                            </div>
+                        }
+                        {loading &&
+                            <div className="seeking-overlay">
+                                <div className="seeking-spinner"></div>
+                                <div className="seeking-text">Loading...</div>
                             </div>
                         }
                         {seeking &&
