@@ -112,6 +112,39 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
 
     return (
         <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: isDragging ? 'auto' : 'none' }}>
+            {selectedBoxId && (() => {
+                const selectedBox = boxes.find(b => b.id === selectedBoxId);
+                if (!selectedBox) return null;
+                // Is the box visible?
+                if (currentTime < selectedBox.label.start || currentTime > selectedBox.label.end) {
+                    return null;
+                }
+                const tipWidth = 200;
+                const tipHeight = 48;
+                const left = selectedBox.label.x / scaleFactorX;
+                const top = Math.max(0, selectedBox.label.y / scaleFactorY - tipHeight - 8) - 10;
+                return (
+                    <div style={{
+                        position: 'absolute',
+                        top,
+                        left,
+                        width: tipWidth,
+                        zIndex: 100,
+                        background: 'rgba(255,255,255,0.5)',
+                        color: '#333',
+                        borderRadius: 4,
+                        padding: '4px 10px',
+                        fontSize: 13,
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                        textAlign: 'left',
+                        pointerEvents: 'none'
+                    }}>
+                        <div><b>Keyboard Shortcuts:</b></div>
+                        <div>(Ctrl +) Arrow = move</div>
+                        <div>(Ctrl +) Shift + Arrow = size</div>
+                    </div>
+                );
+            })()}
             {boxes
                 .map((box, originalIndex) => ({ ...box, originalIndex }))
                 .filter(box => currentTime >= box.label.start && currentTime <= box.label.end)
