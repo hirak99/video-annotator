@@ -127,7 +127,9 @@ def add_common_endpoints(
         return []
 
     # Simple function to save labels to a JSON file
-    def _save_labels(video_id: int, labels: list[annotation_types.AnnotationProps]):
+    def _save_labels(
+        video_id: int, labels: list[annotation_types.AnnotationProps], client_id: str
+    ):
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
 
@@ -140,9 +142,10 @@ def add_common_endpoints(
                 return d
 
             json.dump([dump_label(label) for label in labels], f)
-        # Emit a SocketIO event to notify all clients
+        # Emit a SocketIO event to notify all clients, including the client_id if provided
         try:
-            socketio.emit("labels_updated", {"video_id": video_id})
+            payload = {"video_id": video_id, "client_id": client_id}
+            socketio.emit("labels_updated", payload)
         except Exception as e:
             logging.warning("SocketIO emit failed:", e)
 
@@ -186,12 +189,16 @@ def add_common_endpoints(
     @app.route("/api/set-labels/<int:video_id>", methods=["POST"])
     @_login_required
     def set_labels(video_id: int):
+        # Expect request.json to be a dict with keys: "labels" (list) and "client_id" (str)
+        data = request.json
+        labels_data = data.get("labels", [])  # type: ignore
+        client_id = data.get("client_id", "")  # type: ignore
         labels = [
             annotation_types.AnnotationProps.model_validate(label)
-            for label in typing.cast(list[dict[str, str]], request.json)
+            for label in typing.cast(list[dict[str, str]], labels_data)
         ]
 
-        _save_labels(video_id, labels)
+        _save_labels(video_id, labels, client_id=client_id)
         return jsonify(
             {"status": "success", "labels": [label.model_dump() for label in labels]}
         )

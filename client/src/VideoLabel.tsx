@@ -22,6 +22,8 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 const VideoPlayer: React.FC = () => {
 
     const [username, setUsername] = useState<string | null>(null);
+    // Unique client id for socket event filtering
+    const clientIdRef = useRef<string>(generateRandomString(16));
     const [playbackRate, setPlaybackRate] = useState<number>(1);
     const [enableEdit, setEnableEdit] = useState<boolean>(false);
     const [blinkEdit, setBlinkEdit] = useState<boolean>(false);
@@ -82,7 +84,9 @@ const VideoPlayer: React.FC = () => {
         // Socket.IO connection for real-time label updates
         const socketUrl = BACKEND_URL?.replace(/^http/, "ws") || "";
         const socket: Socket = io(socketUrl, { transports: ["websocket"] });
-        socket.on("labels_updated", (data: { video_id: number }) => {
+        socket.on("labels_updated", (data: { video_id: number, client_id?: string }) => {
+            // Ignore if this client initiated the change
+            if (data.client_id && data.client_id === clientIdRef.current) return;
             if (data.video_id === currentVideoIdx) {
                 getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
                     setBoxes(response.data);
@@ -189,7 +193,13 @@ const VideoPlayer: React.FC = () => {
         }
         throttleTimeout.current = setTimeout(() => {
             withSaving(
-                axios.post(`${BACKEND_URL}/api/set-labels/${currentVideoIdx}`, latestBoxesRef.current)
+                axios.post(
+                    `${BACKEND_URL}/api/set-labels/${currentVideoIdx}`,
+                    {
+                        labels: latestBoxesRef.current,
+                        client_id: clientIdRef.current,
+                    }
+                )
             );
             throttleTimeout.current = null;
         }, 500);
