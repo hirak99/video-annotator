@@ -118,6 +118,7 @@ const VideoPlayer: React.FC = () => {
             displayWidth: video.clientWidth,
             displayHeight: video.clientHeight
         });
+        setPlaybackRate(video.playbackRate);
         setLoading(false); // Video is ready, stop loading
     };
 
@@ -406,12 +407,14 @@ const VideoPlayer: React.FC = () => {
                                     appearance: 'none',  // Disables the down arrow.
                                     border: '1px solid #ccc',
                                     borderRadius: '2px',
-                                    padding: '1px 12px',
+                                    padding: '1px 8px',
                                     color: '#333',
                                     outline: 'none',
-                                    marginLeft: '6px'
+                                    marginLeft: '6px',
+                                    textAlign: 'center',
                                 }}
                             >
+                                <option value={0.2}>0.2x</option>
                                 <option value={0.5}>0.5x</option>
                                 <option value={1}>1x</option>
                                 <option value={2}>2x</option>
