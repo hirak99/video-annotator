@@ -22,6 +22,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 const VideoPlayer: React.FC = () => {
 
     const [username, setUsername] = useState<string | null>(null);
+    const [playbackRate, setPlaybackRate] = useState<number>(1);
     const [enableEdit, setEnableEdit] = useState<boolean>(false);
     const [blinkEdit, setBlinkEdit] = useState<boolean>(false);
     const [boxes, setBoxes] = useState<AnnotationProps[]>([]);
@@ -273,6 +274,21 @@ const VideoPlayer: React.FC = () => {
         setLoading(false);
     };
 
+    // Handler for playback rate change
+    const handlePlaybackRateChange = (rate: number) => {
+        setPlaybackRate(rate);
+        if (playerRef.current) {
+            playerRef.current.playbackRate = rate;
+        }
+    };
+
+    // Ensure video playbackRate is updated if playbackRate state changes (e.g., on video load)
+    useEffect(() => {
+        if (playerRef.current) {
+            playerRef.current.playbackRate = playbackRate;
+        }
+    }, [playbackRate]);
+
     return (
         <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -348,7 +364,7 @@ const VideoPlayer: React.FC = () => {
                         />
                     </div>
                     {/* Video Seek Controls */}
-                    <div className="media-controls">
+                    <div className="media-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 1); }}>⏪ -1s</button>
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.5); }}>-0.5s</button>
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.1); }}>-0.1s</button>
@@ -368,6 +384,21 @@ const VideoPlayer: React.FC = () => {
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.1); }}>+0.1s</button>
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.5); }}>+0.5s</button>
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 1); }}>+1s ⏩</button>
+
+                        {/* Playback Speed Controls */}
+                        <label style={{ marginLeft: '16px', fontWeight: 500 }}>
+                            Speed:
+                            <select
+                                value={playbackRate}
+                                onChange={e => handlePlaybackRateChange(Number(e.target.value))}
+                                style={{ marginLeft: '6px', padding: '2px 6px' }}
+                            >
+                                <option value={0.5}>0.5x</option>
+                                <option value={1}>1x</option>
+                                <option value={2}>2x</option>
+                                <option value={4}>4x</option>
+                            </select>
+                        </label>
                     </div>
                 </div> {/* End of video/box wrapper */}
 
