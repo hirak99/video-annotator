@@ -81,6 +81,10 @@ While keeping it open, also start the client.
 
 For production environment, it is recommended to use `./prod_server.sh` and `./prod_client.sh` instead. See documentation in the scripts.
 
+# Acknowledgements
+
+Special thanks to [Nina Shih](https://github.com/nasocializes) for valuable contributions during early development and beyond.
+
 # Support
 
 I'm happy to support the community and help you with any issues you encounter. Here are a few ways to get support:
