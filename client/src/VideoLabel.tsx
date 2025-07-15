@@ -386,12 +386,21 @@ const VideoPlayer: React.FC = () => {
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 1); }}>+1s ⏩</button>
 
                         {/* Playback Speed Controls */}
-                        <label style={{ marginLeft: '16px', fontWeight: 500 }}>
+                        <label style={{ marginLeft: '16px' }}>
                             Speed:
                             <select
+                                className='media-btn'
                                 value={playbackRate}
                                 onChange={e => handlePlaybackRateChange(Number(e.target.value))}
-                                style={{ marginLeft: '6px', padding: '2px 6px' }}
+                                style={{
+                                    appearance: 'none',  // Disables the down arrow.
+                                    border: '1px solid #ccc',
+                                    borderRadius: '2px',
+                                    padding: '1px 12px',
+                                    color: '#333',
+                                    outline: 'none',
+                                    marginLeft: '6px'
+                                }}
                             >
                                 <option value={0.5}>0.5x</option>
                                 <option value={1}>1x</option>
