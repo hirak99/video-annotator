@@ -1,3 +1,4 @@
+import { TinyColor } from '@ctrl/tinycolor';
 import React, { useState, useEffect } from 'react';
 import { AnnotationProps } from './types';
 import { hashToHSLColor, stringToHash } from './utils';
@@ -16,6 +17,7 @@ interface LabelRendererProps {
     setAndUpdateBoxes: (updatedBoxes: AnnotationProps[]) => void;
     selectedBoxId: string | null;
     setSelectedBoxId: (id: string | null) => void;
+    labelTypes: import('./types').LabelType[];
 }
 
 const LabelRenderer: React.FC<LabelRendererProps> = ({
@@ -26,7 +28,8 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
     setBoxes,
     setAndUpdateBoxes,
     selectedBoxId,
-    setSelectedBoxId
+    setSelectedBoxId,
+    labelTypes
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     const scaleFactorX = videoDimensions.naturalWidth / videoDimensions.displayWidth;
@@ -147,96 +150,104 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
             {boxes
                 .map((box, originalIndex) => ({ ...box, originalIndex }))
                 .filter(box => currentTime >= box.label.start && currentTime <= box.label.end)
-                .map(box => (
-                    <div
-                        key={box.id}
-                        data-box-id={box.id}
-                        style={{
-                            whiteSpace: 'nowrap',
-                            position: 'absolute',
-                            top: `${box.label.y / scaleFactorY}px`,
-                            left: `${box.label.x / scaleFactorX}px`,
-                            width: `${box.label.width / scaleFactorX - 2 * outlineBorder}px`,
-                            height: `${box.label.height / scaleFactorY - 2 * outlineBorder}px`,
-                            border: `${outlineBorder}px solid ${hashToHSLColor(stringToHash(box.name))}`,
-                            background: `${hashToHSLColor(stringToHash(box.name)).replace('hsl', 'hsla').replace(')', ', 0.3)')}`,
-                            pointerEvents: 'auto',
-                            boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : undefined,
-                            zIndex: box.id === selectedBoxId ? 2 : 1,
-                        }}
-                        onMouseDown={(event) => {
-                            // Only activate on left click, ignore other clicks.
-                            if (event.button !== 0) {
-                                return;
-                            }
-                            event.preventDefault();  // Prevent default e.g. click and drag selection.
-                            event.stopPropagation();
-                            setIsDragging(true);
-                            const boxRef = event.currentTarget;
-                            const boxId = boxRef.getAttribute('data-box-id');
-                            let box = boxes.find(b => b.id === boxId);
-                            if (box) {
-                                setSelectedBoxId(selectedBoxId === box.id ? null : box.id);
-
-                                const startX = event.clientX;
-                                const startY = event.clientY;
-                                const initialX = box.label.x;
-                                const initialY = box.label.y;
-                                const initialWidth = box.label.width;
-                                const initialHeight = box.label.height;
-
-                                const isBottomRight = isEventAtBottomRight(event);
-
-                                const handleMouseMove = (event: MouseEvent) => {
-                                    // Remove thick border while moving.
-                                    setSelectedBoxId(null);
-
-                                    const deltaX = event.clientX - startX;
-                                    const deltaY = event.clientY - startY;
-
-                                    if (isBottomRight) {
-                                        let newWidth = initialWidth + deltaX * scaleFactorX;
-                                        let newHeight = initialHeight + deltaY * scaleFactorY;
-                                        box = { ...box!, label: { ...box!.label, width: newWidth, height: newHeight } };
-                                    } else {
-                                        const newX = initialX + deltaX * scaleFactorX;
-                                        const newY = initialY + deltaY * scaleFactorY;
-                                        box = { ...box!, label: { ...box!.label, x: newX, y: newY } };
-                                    }
-                                    setBoxes(boxes.map(b => b.id === boxId ? box! : b));
-                                };
-
-                                const handleMouseUp = (event: MouseEvent) => {
-                                    setIsDragging(false);
-                                    document.removeEventListener('mousemove', handleMouseMove);
-                                    document.removeEventListener('mouseup', handleMouseUp);
-
-                                    // Update only if mouse moved, and not just clicked.
-                                    if (event.clientX !== startX || event.clientY !== startY) {
-                                        handleUpdateBox(box!);
-                                    }
-                                };
-
-                                document.addEventListener('mousemove', handleMouseMove);
-                                document.addEventListener('mouseup', handleMouseUp);
-                            }
-                        }}
-                        onMouseMove={(event) => {
-                            const boxRef = event.currentTarget;
-                            const boxId = boxRef.getAttribute('data-box-id');
-                            const box = boxes.find(b => b.id === boxId);
-                            if (box) {
-                                if (isEventAtBottomRight(event)) {
-                                    boxRef.style.cursor = 'se-resize';
-                                } else {
-                                    boxRef.style.cursor = 'move';
+                .map(box => {
+                    const labelType = labelTypes.find(lt => lt.name === box.name);
+                    if (!labelType || !labelType.color) {
+                        console.warn(`Color not defined for label type ${box.name}. Using default.`);
+                    }
+                    const boxColor = labelType && labelType.color ? labelType.color : hashToHSLColor(stringToHash(box.name));
+                    const boxBg = new TinyColor(boxColor).setAlpha(0.3).toString();
+                    return (
+                        <div
+                            key={box.id}
+                            data-box-id={box.id}
+                            style={{
+                                whiteSpace: 'nowrap',
+                                position: 'absolute',
+                                top: `${box.label.y / scaleFactorY}px`,
+                                left: `${box.label.x / scaleFactorX}px`,
+                                width: `${box.label.width / scaleFactorX - 2 * outlineBorder}px`,
+                                height: `${box.label.height / scaleFactorY - 2 * outlineBorder}px`,
+                                border: `${outlineBorder}px solid ${boxColor}`,
+                                background: `${boxBg}`,
+                                pointerEvents: 'auto',
+                                boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : undefined,
+                                zIndex: box.id === selectedBoxId ? 2 : 1,
+                            }}
+                            onMouseDown={(event) => {
+                                // Only activate on left click, ignore other clicks.
+                                if (event.button !== 0) {
+                                    return;
                                 }
-                            }
-                        }}
-                    >
-                        {box.originalIndex + 1}. {box.name}
-                    </div>
-                ))}
+                                event.preventDefault();  // Prevent default e.g. click and drag selection.
+                                event.stopPropagation();
+                                setIsDragging(true);
+                                const boxRef = event.currentTarget;
+                                const boxId = boxRef.getAttribute('data-box-id');
+                                let box = boxes.find(b => b.id === boxId);
+                                if (box) {
+                                    setSelectedBoxId(selectedBoxId === box.id ? null : box.id);
+
+                                    const startX = event.clientX;
+                                    const startY = event.clientY;
+                                    const initialX = box.label.x;
+                                    const initialY = box.label.y;
+                                    const initialWidth = box.label.width;
+                                    const initialHeight = box.label.height;
+
+                                    const isBottomRight = isEventAtBottomRight(event);
+
+                                    const handleMouseMove = (event: MouseEvent) => {
+                                        // Remove thick border while moving.
+                                        setSelectedBoxId(null);
+
+                                        const deltaX = event.clientX - startX;
+                                        const deltaY = event.clientY - startY;
+
+                                        if (isBottomRight) {
+                                            let newWidth = initialWidth + deltaX * scaleFactorX;
+                                            let newHeight = initialHeight + deltaY * scaleFactorY;
+                                            box = { ...box!, label: { ...box!.label, width: newWidth, height: newHeight } };
+                                        } else {
+                                            const newX = initialX + deltaX * scaleFactorX;
+                                            const newY = initialY + deltaY * scaleFactorY;
+                                            box = { ...box!, label: { ...box!.label, x: newX, y: newY } };
+                                        }
+                                        setBoxes(boxes.map(b => b.id === boxId ? box! : b));
+                                    };
+
+                                    const handleMouseUp = (event: MouseEvent) => {
+                                        setIsDragging(false);
+                                        document.removeEventListener('mousemove', handleMouseMove);
+                                        document.removeEventListener('mouseup', handleMouseUp);
+
+                                        // Update only if mouse moved, and not just clicked.
+                                        if (event.clientX !== startX || event.clientY !== startY) {
+                                            handleUpdateBox(box!);
+                                        }
+                                    };
+
+                                    document.addEventListener('mousemove', handleMouseMove);
+                                    document.addEventListener('mouseup', handleMouseUp);
+                                }
+                            }}
+                            onMouseMove={(event) => {
+                                const boxRef = event.currentTarget;
+                                const boxId = boxRef.getAttribute('data-box-id');
+                                const box = boxes.find(b => b.id === boxId);
+                                if (box) {
+                                    if (isEventAtBottomRight(event)) {
+                                        boxRef.style.cursor = 'se-resize';
+                                    } else {
+                                        boxRef.style.cursor = 'move';
+                                    }
+                                }
+                            }}
+                        >
+                            {box.originalIndex + 1}. {box.name}
+                        </div>
+                    )
+                })}
         </div>
     );
 };

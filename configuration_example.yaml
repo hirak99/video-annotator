@@ -8,10 +8,13 @@ users:
 labels:
   - name: (unknown)
     allow_overlap: true
+    color: '#000'
   - name: blur
     allow_overlap: true
+    color: 'green'
   - name: object_no_1
     allow_overlap: false
+    color: 'red'
 
 videos:
   - video_file: "video.mkv"

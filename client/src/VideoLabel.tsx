@@ -372,6 +372,7 @@ const VideoPlayer: React.FC = () => {
                             setAndUpdateBoxes={setAndUpdateBoxes}
                             selectedBoxId={selectedBoxId}
                             setSelectedBoxId={setSelectedBoxId}
+                            labelTypes={labelTypes}
                         />
                     </div>
                     {/* Video Seek Controls */}

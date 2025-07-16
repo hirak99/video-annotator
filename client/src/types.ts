@@ -18,4 +18,5 @@ export interface AnnotationProps {
 export interface LabelType {
     name: string;
     allow_overlap: boolean;
+    color?: string;
 }
