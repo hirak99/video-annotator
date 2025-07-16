@@ -476,8 +476,12 @@ const VideoPlayer: React.FC = () => {
                         style={{ margin: '10px 0 0 auto', display: 'block' }}
                         onClick={() => {
                             setAndUpdateBoxes(boxes.sort((a, b) => {
-                                if (a.name < b.name) return -1;
-                                if (a.name > b.name) return 1;
+                                if (a.label.start === b.label.start) {
+                                    // Sort by name if they start at same time.
+                                    if (a.name < b.name) return -1;
+                                    if (a.name > b.name) return 1;
+                                }
+                                // In general sort by time.
                                 return a.label.start - b.label.start;
                             }));
                         }}
