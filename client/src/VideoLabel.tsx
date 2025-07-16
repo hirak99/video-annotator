@@ -179,6 +179,8 @@ const VideoPlayer: React.FC = () => {
     const latestBoxesRef = useRef<AnnotationProps[]>([]);
     const setAndUpdateBoxes = (newBoxes: AnnotationProps[]) => {
         if (!enableEdit) {
+            // Reset to last known boxes that were saved to, or obtained from backend.
+            // I.e. revert any changes that may have been made but not saved.
             setBoxes(lastBackendBoxes.current);
             // Blink the enableEdit label twice
             setBlinkEdit(true);
@@ -202,6 +204,8 @@ const VideoPlayer: React.FC = () => {
                     }
                 )
             );
+            // Update what is now known to the backend.
+            lastBackendBoxes.current = latestBoxesRef.current;
             throttleTimeout.current = null;
         }, 500);
     };
