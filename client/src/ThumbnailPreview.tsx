@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 const THUMBNAIL_WIDTH = 160; // Must match server
 const THUMBNAIL_HEIGHT = 90; // Must match server
 const SPRITE_COLS = 10; // Must match montage -tile 10x
-const THUMBNAIL_SECS = 5; // Must match server
+const THUMBNAIL_SECS = 10; // Must match server
 
 interface ThumbnailPreviewProps {
     thumbSpriteUrl: string;

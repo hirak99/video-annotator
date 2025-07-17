@@ -27,6 +27,7 @@ Following are a few examples.
 - **Visual feedback** when it is saving (top left) or skipping the video via seek buttons (overlay on the video).
 - **Backend calls are consolidated** for keyboard edits to save making numerous calls in short succession if user presses and holds down a key.
 - **Safety mechanism for edits** disables editing by default on load, easily disengaged on clicking the button to start editing.
+- **Thumbnail preview** upon scrubbing the video seek bar.
 
 ### What it does not do
 
@@ -37,6 +38,7 @@ The main reason it does not do them is that I did not need them yet. It is possi
 - No support for keyframe or moving rectangles.
 - No support for segmentation or arbitrary polygonal region-of-interests.
 - No support for replication, i.e. multiple independent labeling for the same video.
+- Video file names must be different (even if they are within different directories).
 
 ## Why another one?
 
@@ -53,6 +55,9 @@ However, I found them to be too powerful and complex for what I needed. I felt t
 After cloning, install the necessary packages. You may optionally install and run the Python packages on a Python virtual environment.
 
 ```sh
+# General movie and image tools.
+sudo apt install ffmpeg imagemagick
+
 # Install necessary python modules.
 pip install flask flask_cors flask_socketio gunicorn pydantic
 

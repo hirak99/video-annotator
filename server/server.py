@@ -19,7 +19,7 @@ from . import preprocess_movies
 
 _CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
 
-# Convert mkv to mp4 here.
+# Deleted on exit.
 _TEMP_DIR = "_temp_cache"
 
 
@@ -315,11 +315,12 @@ class MainApp:
 
     def __del__(self):
         """Remove temporary files after request."""
-        for file_name in os.listdir(_TEMP_DIR):
-            file_path = os.path.join(_TEMP_DIR, file_name)
-            if os.path.isfile(file_path):
-                os.remove(file_path)
-                logging.info(f"Deleted temporary file: {file_path}")
+        if os.path.exists(_TEMP_DIR):
+            for file_name in os.listdir(_TEMP_DIR):
+                file_path = os.path.join(_TEMP_DIR, file_name)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+                    logging.info(f"Deleted temporary file: {file_path}")
 
 
 if __name__ == "__main__":

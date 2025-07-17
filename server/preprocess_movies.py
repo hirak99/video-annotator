@@ -8,13 +8,13 @@ import subprocess
 _PROCESSED_ROOT = "./_persistent_cache"
 
 _THUMBNAIL_SPRITE_FNAME = "thumbnail_sprite.jpg"
-# If you change this, reflect it in the client.
-# Also delete the persistent cache to rebuild.
-_THUMBNAIL_SECS = 5
 
-# Thumbnail size (must match client)
+# If you change these, reflect it in the ThumbnailPreviews.tsx.
+# Also delete the persistent cache to rebuild.
 _THUMBNAIL_WIDTH = 160
 _THUMBNAIL_HEIGHT = 90
+_SPRITE_COLS = 10
+_THUMBNAIL_SECS = 10
 
 
 # Creates movie sprites (and may be later process the movie for better streaming as well).
@@ -26,7 +26,7 @@ class ProcessedMovie:
         )
 
         if not os.path.exists(self.thumbnail_sprite_fname):
-            os.makedirs(self._processed_dir)
+            os.makedirs(self._processed_dir, exist_ok=True)
             self._make_thumb_sprites()
 
     @property
@@ -62,7 +62,7 @@ class ProcessedMovie:
                 "montage",
                 f"{temp_dir}/_temp_thumb_*.jpg",
                 "-tile",
-                "10x",
+                f"{_SPRITE_COLS}x",
                 "-geometry",
                 "+0+0",
                 f"{temp_dir}/{_THUMBNAIL_SPRITE_FNAME}",
