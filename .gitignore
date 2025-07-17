@@ -1,7 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 **/__pycache__
-_temp_movie_cache
+_temp_cache
+_persistent_cache
 
 # Node stuff.
 

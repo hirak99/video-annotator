@@ -15,11 +15,12 @@ import pydantic
 import yaml
 
 from . import annotation_types
+from . import preprocess_movies
 
 _CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
 
 # Convert mkv to mp4 here.
-_TEMP_DIR = "_temp_movie_cache"
+_TEMP_DIR = "_temp_cache"
 
 
 class _User(TypedDict):
@@ -219,6 +220,13 @@ class MainApp:
 
         label_types: list[_LabelProperties] = config["labels"]
         video_files: list[_VideoFile] = config["videos"]
+
+        # Preprocess thumbnails etc.
+        processed_movie_data: list[preprocess_movies.ProcessedMovie] = []
+        for index, video_file in enumerate(video_files):
+            processed_movie_data.append(
+                preprocess_movies.ProcessedMovie(video_file["video_file"])
+            )
 
         add_common_endpoints(
             self.app,
