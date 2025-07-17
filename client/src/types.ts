@@ -9,7 +9,6 @@ export interface BoxLabel {
 }
 
 export interface AnnotationProps {
-  creator: string;
   id: string;
   name: string;
   label: BoxLabel;

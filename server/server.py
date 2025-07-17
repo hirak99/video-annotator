@@ -116,33 +116,46 @@ def add_common_endpoints(
     label_types: list[_LabelProperties],
     socketio: flask_socketio.SocketIO,
 ):
-    # Simple function to get labels from a JSON file
-    def _load_labels(video_id: int) -> list[annotation_types.AnnotationProps]:
+    def _load_labels_all_users(video_id: int) -> annotation_types.UserAnnotations:
         labels_file = video_files[video_id]["label_file"]
         if os.path.exists(labels_file):
             with open(labels_file, "r") as f:
-                return [
-                    annotation_types.AnnotationProps.model_validate(obj)
-                    for obj in json.load(f)
-                ]
-        return []
+                return annotation_types.UserAnnotations.model_validate_json(f.read())
+        return annotation_types.UserAnnotations(by_user={})
+
+    # Simple function to get labels from a JSON file
+    def _load_labels(video_id: int) -> list[annotation_types.AnnotationProps]:
+        user = flask.session.get("username")
+        assert user is not None
+        all_users = _load_labels_all_users(video_id)
+        return all_users.by_user.get(user, [])
 
     # Simple function to save labels to a JSON file
     def _save_labels(
         video_id: int, labels: list[annotation_types.AnnotationProps], client_id: str
     ):
+        all_users = _load_labels_all_users(video_id)
+
+        def dump_label(label):
+            d = label.model_dump()
+            if hasattr(label, "label") and isinstance(
+                label.label, annotation_types.BoxLabel
+            ):
+                d["label"] = label.label.model_dump_rounded()
+            return d
+
+        user = flask.session.get("username")
+        assert user is not None
+        all_users.by_user[user] = [
+            annotation_types.AnnotationProps.model_validate(x) for x in labels
+        ]
+
+        json.dumps([dump_label(label) for label in labels])
+
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
+            json.dump(all_users.model_dump(), f, indent=2)
 
-            def dump_label(label):
-                d = label.model_dump()
-                if hasattr(label, "label") and isinstance(
-                    label.label, annotation_types.BoxLabel
-                ):
-                    d["label"] = label.label.model_dump_rounded()
-                return d
-
-            json.dump([dump_label(label) for label in labels], f)
         # Emit a SocketIO event to notify all clients, including the client_id if provided
         try:
             payload = {"video_id": video_id, "client_id": client_id}
@@ -177,15 +190,6 @@ def add_common_endpoints(
     @app.route("/api/label-types", methods=["GET"])
     def get_label_types():
         return jsonify(label_types)
-
-    @app.route("/api/current-user", methods=["GET"])
-    @_login_required
-    def get_current_user():
-        username = flask.session.get("username")
-        if username:
-            return jsonify({"username": username})
-        else:
-            return jsonify({"error": "Not logged in"}), 401
 
     @app.route("/api/set-labels/<int:video_id>", methods=["POST"])
     @_login_required

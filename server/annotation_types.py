@@ -25,10 +25,10 @@ class BoxLabel(pydantic.BaseModel):
 
 
 class AnnotationProps(pydantic.BaseModel):
-    # User who created this label.
-    creator: str
-
     # Following comes from the UI.
     id: str
     name: str
     label: BoxLabel
+
+class UserAnnotations(pydantic.BaseModel):
+    by_user: dict[str, list[AnnotationProps]]
