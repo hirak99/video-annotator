@@ -1,5 +1,5 @@
 import { TinyColor } from '@ctrl/tinycolor';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AnnotationProps } from './types';
 import { hashToHSLColor, stringToHash } from './utils';
 
@@ -36,19 +36,25 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
     const scaleFactorY = videoDimensions.naturalHeight / videoDimensions.displayHeight;
     const outlineBorder = 2;
 
+    const isAnnotationVisible = useCallback((ann: AnnotationProps) => {
+        return ann && currentTime >= ann.label.start && currentTime <= ann.label.end;
+    }, [currentTime]);
+
     // Keyboard shortcuts for moving/resizing selected box
     useEffect(() => {
         if (!selectedBoxId) return;
+
+        const boxIndex = boxes.findIndex(b => b.id === selectedBoxId);
+        if (boxIndex === -1) return;
+        const box = boxes[boxIndex];
+        if (!isAnnotationVisible(box)) return;
+
 
         const handleKeyDown = (event: KeyboardEvent) => {
             // // Only act if a box is selected and no input is focused
             // if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || (document.activeElement as HTMLElement).isContentEditable)) {
             //     return;
             // }
-
-            const boxIndex = boxes.findIndex(b => b.id === selectedBoxId);
-            if (boxIndex === -1) return;
-            const box = boxes[boxIndex];
 
             let dx = 0, dy = 0, dWidth = 0, dHeight = 0;
             const moveAmount = event.ctrlKey ? 5 : 1;
@@ -104,7 +110,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedBoxId, boxes, setBoxes, setAndUpdateBoxes, scaleFactorX, scaleFactorY]);
+    }, [selectedBoxId, boxes, setBoxes, setAndUpdateBoxes, scaleFactorX, scaleFactorY, isAnnotationVisible]);
 
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
         const target = event.target as HTMLElement;
@@ -118,6 +124,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
             {selectedBoxId && (() => {
                 const selectedBox = boxes.find(b => b.id === selectedBoxId);
                 if (!selectedBox) return null;
+                if (!isAnnotationVisible(selectedBox)) return null;
                 // Is the box visible?
                 if (currentTime < selectedBox.label.start || currentTime > selectedBox.label.end) {
                     return null;
