@@ -8,6 +8,7 @@ import LabelRenderer from './LabelRenderer';
 import { useNavigate } from 'react-router';
 import { generateRandomString } from './utils'
 import ThumbnailPreview from './ThumbnailPreview';
+import Sidebar from './Sidebar';
 
 axios.defaults.withCredentials = true;
 
@@ -448,71 +449,19 @@ const VideoPlayer: React.FC = () => {
                     </div>
                 </div> {/* End of video/box wrapper */}
 
-                {/* Sidebar */}
-                <div
-                    style={{
-                        width: '30%', // Sidebar takes 30% width.
-                        padding: '10px',
-                        borderLeft: '1px solid #ccc',
-                        overflowY: 'auto',
-                        maxHeight: '100vh',
-                    }}
-                >
-                    <div style={{
-                        paddingBottom: '10px',
-                        borderBottom: '1px solid #eee',
-                        marginBottom: '10px',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center'
-                    }}>
-                        <span>Regions of Interest</span>
-                        <button onClick={addBox}>Add</button>
-                    </div>
-
-                    {/* Div to show labelError and hidden if error is empty */}
-                    {labelError && (
-                        <div style={{ color: 'red', marginBottom: '10px', textAlign: 'center' }}>
-                            {labelError}
-                        </div>
-                    )}
-
-                    {/* List of all the annotations. */}
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}> {/* Flex grid for items */}
-                        {boxes.map((box, index) => (
-                            <SidebarItem
-                                index={index}
-                                key={box.id}
-                                labelTypes={labelTypes}
-                                box={box}
-                                onUpdateBox={handleUpdateBox}
-                                onDeleteBox={handleDeleteBox}
-                                currentTime={currentTime}
-                                selectedBoxId={selectedBoxId}
-                                setSelectedBoxId={setSelectedBoxId}
-                                seekToTime={seekToTime}
-                            />
-                        ))}
-                    </div>
-
-                    {/* Sort button */}
-                    <button
-                        style={{ margin: '10px 0 0 auto', display: 'block' }}
-                        onClick={() => {
-                            setAndUpdateBoxes(boxes.sort((a, b) => {
-                                if (a.label.start === b.label.start) {
-                                    // Sort by name if they start at same time.
-                                    if (a.name < b.name) return -1;
-                                    if (a.name > b.name) return 1;
-                                }
-                                // In general sort by time.
-                                return a.label.start - b.label.start;
-                            }));
-                        }}
-                    >
-                        Sort
-                    </button>
-                </div> {/* End of sidebar */}
+            <Sidebar
+                boxes={boxes}
+                labelTypes={labelTypes}
+                labelError={labelError}
+                addBox={addBox}
+                handleUpdateBox={handleUpdateBox}
+                handleDeleteBox={handleDeleteBox}
+                currentTime={currentTime}
+                selectedBoxId={selectedBoxId}
+                setSelectedBoxId={setSelectedBoxId}
+                seekToTime={seekToTime}
+                setAndUpdateBoxes={setAndUpdateBoxes}
+            />
             </div>
         </div>
     );
