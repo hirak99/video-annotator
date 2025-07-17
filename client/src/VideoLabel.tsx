@@ -119,6 +119,43 @@ const VideoPlayer: React.FC = () => {
         setCurrentTime(event.currentTarget.currentTime);
     };
 
+    // High-frequency currentTime update using requestAnimationFrame
+    useEffect(() => {
+        let rafId: number | null = null;
+        const update = () => {
+            if (playerRef.current && !playerRef.current.paused && !playerRef.current.ended) {
+                setCurrentTime(playerRef.current.currentTime);
+                rafId = requestAnimationFrame(update);
+            }
+        };
+        const currentPlayer = playerRef.current;
+        if (currentPlayer) {
+            const onPlay = () => {
+                rafId = requestAnimationFrame(update);
+            };
+            const onPause = () => {
+                if (rafId !== null) {
+                    cancelAnimationFrame(rafId);
+                    rafId = null;
+                }
+            };
+            currentPlayer.addEventListener('play', onPlay);
+            currentPlayer.addEventListener('pause', onPause);
+            // Start if already playing
+            if (!currentPlayer.paused && !currentPlayer.ended) {
+                rafId = requestAnimationFrame(update);
+            }
+            // React will call this to clean up once the effect unloads.
+            return () => {
+                currentPlayer.removeEventListener('play', onPlay);
+                currentPlayer.removeEventListener('pause', onPause);
+                if (rafId !== null) {
+                    cancelAnimationFrame(rafId);
+                }
+            };
+        }
+    }, []);
+
     const handleVideoLoad = (event: React.SyntheticEvent<HTMLVideoElement>) => {
         const video = event.currentTarget;
         setVideoDimensions({
