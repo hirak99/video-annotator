@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import ResizeObserver from 'resize-observer-polyfill';
 import axios from 'axios';
-import SidebarItem from './SidebarItem';
 import { io, Socket } from "socket.io-client";
 import { AnnotationProps, LabelType } from './types';
 import LabelRenderer from './LabelRenderer';
@@ -34,7 +33,6 @@ const VideoPlayer: React.FC = () => {
     const [seeking, setSeeking] = useState(false);
     const [loading, setLoading] = useState(true); // New loading state
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
-    const [labelError, setLabelError] = useState<string>("");
     const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
     const [videoFiles, setVideoFiles] = useState<any[]>([]);
     const [labelTypes, setLabelTypes] = useState<LabelType[]>([]);
@@ -150,41 +148,6 @@ const VideoPlayer: React.FC = () => {
         observer.observe(playerRef.current);
         return () => observer.disconnect();
     }, []);
-
-    useEffect(() => {
-        // Check if box intervals overlap in time with same type of label, for any labelType which should not overlap.
-        const overlappingLabels: { [key: string]: { start: number; end: number; id: string }[] } = {};
-
-        for (const box of boxes) {
-            const labelType = labelTypes.find(lt => lt.name === box.name);
-            if (labelType && !labelType.allow_overlap) {
-                if (!overlappingLabels[box.name]) {
-                    overlappingLabels[box.name] = [];
-                }
-                overlappingLabels[box.name].push({ start: box.label.start, end: box.label.end, id: box.id });
-            }
-        }
-
-        // Store the overlapping label names in an array.
-        const overlappingLabelNames: string[] = [];
-        for (const labelName in overlappingLabels) {
-            const intervals = overlappingLabels[labelName].sort((a, b) => a.start - b.start);
-            for (let i = 0; i < intervals.length - 1; i++) {
-                if (intervals[i].end > intervals[i + 1].start) {
-                    overlappingLabelNames.push(`${labelName} (at ${intervals[i].end})`);
-                    break;
-                }
-            }
-        }
-
-        // Generate an error of the form "Following labels do not allow overlap: 'person1', 'person2'. Please remove any overlap in time."
-        let error = "";
-        if (overlappingLabelNames.length > 0) {
-            error = `Overlap not allowed for label types: '${overlappingLabelNames.join("', '")}'. Please edit to remove overlap.`;
-        }
-
-        setLabelError(error);
-    }, [boxes, labelTypes]);
 
     // Utility to set boxes and push to backend (throttled)
     const throttleTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -346,59 +309,59 @@ const VideoPlayer: React.FC = () => {
                 <div style={{ width: '70%' }}>
                     {/* Video and boxes. Everything in this div must have relative positioning. */}
                     <div style={{ position: 'relative' }}>
-                    {/* Video Player */}
-                    <video
-                        ref={playerRef}
-                        src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
-                        controls
-                        controlsList='nofullscreen'  // Seems Firefox does not respect this.
-                        disablePictureInPicture
-                        muted
-                        onTimeUpdate={handleTimeUpdate}
-                        onLoadedMetadata={handleVideoLoad}
-                        onError={handleVideoError}
-                        // Could help with error "fetching process of the media was abotrted at user's request".
-                        onAbort={() => console.debug('Video fetch aborted')}
-                        style={{ width: '100%', backgroundColor: 'black' }}
-                    />
+                        {/* Video Player */}
+                        <video
+                            ref={playerRef}
+                            src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
+                            controls
+                            controlsList='nofullscreen'  // Seems Firefox does not respect this.
+                            disablePictureInPicture
+                            muted
+                            onTimeUpdate={handleTimeUpdate}
+                            onLoadedMetadata={handleVideoLoad}
+                            onError={handleVideoError}
+                            // Could help with error "fetching process of the media was abotrted at user's request".
+                            onAbort={() => console.debug('Video fetch aborted')}
+                            style={{ width: '100%', backgroundColor: 'black' }}
+                        />
 
-                    <ThumbnailPreview
-                        thumbSpriteUrl={thumbSpriteUrl}
-                        playerRef={playerRef as React.RefObject<HTMLVideoElement>}
-                        videoDimensions={videoDimensions}
-                    />
+                        <ThumbnailPreview
+                            thumbSpriteUrl={thumbSpriteUrl}
+                            playerRef={playerRef as React.RefObject<HTMLVideoElement>}
+                            videoDimensions={videoDimensions}
+                        />
 
-                    {saving &&
-                        <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
-                            Saving...
-                        </div>
-                    }
-                    {loading &&
-                        <div className="seeking-overlay">
-                            <div className="seeking-spinner"></div>
-                            <div className="seeking-text">Loading...</div>
-                        </div>
-                    }
-                    {seeking &&
-                        <div className="seeking-overlay">
-                            <div className="seeking-spinner"></div>
-                            <div className="seeking-text">Seeking...</div>
-                        </div>
-                    }
+                        {saving &&
+                            <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+                                Saving...
+                            </div>
+                        }
+                        {loading &&
+                            <div className="seeking-overlay">
+                                <div className="seeking-spinner"></div>
+                                <div className="seeking-text">Loading...</div>
+                            </div>
+                        }
+                        {seeking &&
+                            <div className="seeking-overlay">
+                                <div className="seeking-spinner"></div>
+                                <div className="seeking-text">Seeking...</div>
+                            </div>
+                        }
 
-                    {/* Label Boxes */}
-                    <LabelRenderer
-                        boxes={boxes}
-                        currentTime={currentTime}
-                        videoDimensions={videoDimensions}
-                        handleUpdateBox={handleUpdateBox}
-                        setBoxes={setBoxes}
-                        setAndUpdateBoxes={setAndUpdateBoxes}
-                        selectedBoxId={selectedBoxId}
-                        setSelectedBoxId={setSelectedBoxId}
-                        labelTypes={labelTypes}
-                    />
-                </div>
+                        {/* Label Boxes */}
+                        <LabelRenderer
+                            boxes={boxes}
+                            currentTime={currentTime}
+                            videoDimensions={videoDimensions}
+                            handleUpdateBox={handleUpdateBox}
+                            setBoxes={setBoxes}
+                            setAndUpdateBoxes={setAndUpdateBoxes}
+                            selectedBoxId={selectedBoxId}
+                            setSelectedBoxId={setSelectedBoxId}
+                            labelTypes={labelTypes}
+                        />
+                    </div>
                     {/* Video Seek Controls */}
                     <div className="media-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 1); }}>⏪ -1s</button>
@@ -449,19 +412,18 @@ const VideoPlayer: React.FC = () => {
                     </div>
                 </div> {/* End of video/box wrapper */}
 
-            <Sidebar
-                boxes={boxes}
-                labelTypes={labelTypes}
-                labelError={labelError}
-                addBox={addBox}
-                handleUpdateBox={handleUpdateBox}
-                handleDeleteBox={handleDeleteBox}
-                currentTime={currentTime}
-                selectedBoxId={selectedBoxId}
-                setSelectedBoxId={setSelectedBoxId}
-                seekToTime={seekToTime}
-                setAndUpdateBoxes={setAndUpdateBoxes}
-            />
+                <Sidebar
+                    boxes={boxes}
+                    labelTypes={labelTypes}
+                    addBox={addBox}
+                    handleUpdateBox={handleUpdateBox}
+                    handleDeleteBox={handleDeleteBox}
+                    currentTime={currentTime}
+                    selectedBoxId={selectedBoxId}
+                    setSelectedBoxId={setSelectedBoxId}
+                    seekToTime={seekToTime}
+                    setAndUpdateBoxes={setAndUpdateBoxes}
+                />
             </div>
         </div>
     );
