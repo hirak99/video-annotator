@@ -6,7 +6,6 @@ import { AnnotationProps, LabelType } from './types';
 import LabelRenderer from './LabelRenderer';
 import { useNavigate } from 'react-router';
 import { generateRandomString } from './utils'
-import ThumbnailPreview from './ThumbnailPreview';
 import VideoSeekBar from './VideoSeekBar';
 import Sidebar from './Sidebar';
 
@@ -344,13 +343,8 @@ const VideoPlayer: React.FC = () => {
                                 }
                             }}
                             width={videoDimensions.displayWidth}
-                        />
-
-                        {false && <ThumbnailPreview
                             thumbSpriteUrl={thumbSpriteUrl}
-                            playerRef={playerRef as React.RefObject<HTMLVideoElement>}
-                            videoDimensions={videoDimensions}
-                        />}
+                        />
 
                         {saving &&
                             <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
