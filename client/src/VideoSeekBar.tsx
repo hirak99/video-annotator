@@ -1,11 +1,15 @@
 import React, { useState, useRef } from 'react';
+import ThumbnailPreview from './ThumbnailPreview';
+
+const THUMBNAIL_WIDTH = 160;
 
 interface VideoSeekBarProps {
     duration: number; // total duration of the video in seconds
     currentTime: number; // current playback time in seconds
     onSeek: (time: number) => void; // callback when user seeks to a new time
-    width: number; // optional width of the seek bar in pixels
+    width: number; // width of the seek bar in pixels
     thumbSpriteUrl: string;
+    playerRef: React.RefObject<HTMLVideoElement | null>;
 }
 
 const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
@@ -14,6 +18,7 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
     onSeek,
     width,
     thumbSpriteUrl,
+    playerRef,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
     // If set, will use this as position instead of the current time.
@@ -87,6 +92,21 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
             onPointerUp={handlePointerUp}
             onClick={handleClick}
         >
+            {/* Thumbnail preview (only show while dragging) */}
+            {isDragging && dragTime !== null && (
+                <ThumbnailPreview
+                    thumbSpriteUrl={thumbSpriteUrl}
+                    playerRef={playerRef as React.RefObject<HTMLVideoElement>}
+                    previewTime={dragTime}
+                    thumbX={Math.max(
+                        0,
+                        Math.min(
+                            (dragTime / duration) * width - THUMBNAIL_WIDTH / 2,
+                            width - THUMBNAIL_WIDTH
+                        )
+                    )}
+                />
+            )}
             {/* Progress bar fill */}
             <div
                 style={{

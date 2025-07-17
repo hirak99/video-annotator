@@ -344,6 +344,7 @@ const VideoPlayer: React.FC = () => {
                             }}
                             width={videoDimensions.displayWidth}
                             thumbSpriteUrl={thumbSpriteUrl}
+                            playerRef={playerRef}
                         />
 
                         {saving &&
