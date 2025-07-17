@@ -394,22 +394,11 @@ const VideoPlayer: React.FC = () => {
                                 Saving...
                             </div>
                         }
-                        {loading &&
+
+                        {(loading || buffering || seeking) &&
                             <div className="seeking-overlay">
                                 <div className="seeking-spinner"></div>
-                                <div className="seeking-text">Loading...</div>
-                            </div>
-                        }
-                        {seeking &&
-                            <div className="seeking-overlay">
-                                <div className="seeking-spinner"></div>
-                                <div className="seeking-text">Seeking...</div>
-                            </div>
-                        }
-                        {buffering &&
-                            <div className="seeking-overlay">
-                                <div className="seeking-spinner"></div>
-                                <div className="seeking-text">Buffering...</div>
+                                <div className="seeking-text">{loading ? "Loading..." : buffering ? "Buffering..." : "Seeking..."}</div>
                             </div>
                         }
 
