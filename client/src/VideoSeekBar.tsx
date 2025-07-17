@@ -13,23 +13,20 @@ interface VideoSeekBarProps {
     onSeekEnd?: () => void; // called by parent after seek is complete
 }
 
-const VideoSeekBar = React.forwardRef<{
-    resetDragTime: () => void;
-}, VideoSeekBarProps>((
-    {
-        duration,
-        currentTime,
-        onSeek,
-        width,
-        thumbSpriteUrl,
-        playerRef,
-    },
-    ref
-) => {
+const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
+    duration,
+    currentTime,
+    onSeek,
+    width,
+    thumbSpriteUrl,
+    playerRef,
+}) => {
     const [isDragging, setIsDragging] = useState(false);
     // If set, will use this as position instead of the current time.
     const [dragTime, setDragTime] = useState<number | null>(null);
     const barRef = useRef<HTMLDivElement>(null);
+    // Track if a seek is pending from the seekbar
+    const pendingSeek = useRef(false);
 
     const height = 6;
 
@@ -59,9 +56,10 @@ const VideoSeekBar = React.forwardRef<{
         setIsDragging(false);
         barRef.current.releasePointerCapture(e.pointerId);
         if (dragTime !== null) {
+            pendingSeek.current = true;
             onSeek(dragTime);
         }
-        // Do NOT setDragTime(null) here; parent will call onSeekEnd after seek is complete
+        // Do NOT setDragTime(null) here; will reset after seeked event
     };
 
     const updateDragTime = (clientX: number) => {
@@ -81,10 +79,21 @@ const VideoSeekBar = React.forwardRef<{
         onSeek(time);
     };
 
-    // Expose a resetDragTime method for parent to call
-    React.useImperativeHandle(ref, () => ({
-        resetDragTime: () => setDragTime(null),
-    }));
+    // Listen for seeked event on the video element to reset dragTime after seek is complete
+    React.useEffect(() => {
+        const video = playerRef?.current;
+        if (!video) return;
+        const handleSeeked = () => {
+            if (pendingSeek.current) {
+                setDragTime(null);
+                pendingSeek.current = false;
+            }
+        };
+        video.addEventListener('seeked', handleSeeked);
+        return () => {
+            video.removeEventListener('seeked', handleSeeked);
+        };
+    }, [playerRef]);
 
     return (
         <div
@@ -151,6 +160,6 @@ const VideoSeekBar = React.forwardRef<{
             />
         </div>
     );
-});
+};
 
 export default VideoSeekBar;
