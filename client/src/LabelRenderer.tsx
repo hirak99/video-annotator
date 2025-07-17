@@ -1,5 +1,5 @@
 import { TinyColor } from '@ctrl/tinycolor';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { AnnotationProps, LabelType } from './types';
 import { hashToHSLColor, stringToHash } from './utils';
 
@@ -50,17 +50,23 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
             .filter(box => currentTime >= box.label.start && currentTime <= box.label.end);
     }, [boxes, currentTime]);
 
+    // Ref to always have latest boxes for keyboard handler without re-registering listener
+    const boxesRef = useRef<AnnotationProps[]>(boxes);
+    useEffect(() => {
+        boxesRef.current = boxes;
+    }, [boxes]);
+
     const isAnnotationVisible = useCallback((ann: AnnotationProps) => {
         return ann && currentTime >= ann.label.start && currentTime <= ann.label.end;
     }, [currentTime]);
 
-    // Keyboard shortcuts for moving/resizing selected box
+    // Keyboard shortcuts for moving/resizing selected box (uses boxesRef to avoid dependency on boxes)
     useEffect(() => {
         if (!selectedBoxId) return;
 
-        const boxIndex = boxes.findIndex(b => b.id === selectedBoxId);
+        const boxIndex = boxesRef.current.findIndex(b => b.id === selectedBoxId);
         if (boxIndex === -1) return;
-        const box = boxes[boxIndex];
+        const box = boxesRef.current[boxIndex];
         if (!isAnnotationVisible(box)) return;
 
 
@@ -116,7 +122,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                 updatedBox.label.width !== box.label.width ||
                 updatedBox.label.height !== box.label.height
             ) {
-                const newBoxes = boxes.map((b, i) => i === boxIndex ? updatedBox : b);
+                const newBoxes = boxesRef.current.map((b, i) => i === boxIndex ? updatedBox : b);
                 // Throttled save all edits after a short delay.
                 setAndUpdateBoxes(newBoxes);
             }
@@ -124,7 +130,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [selectedBoxId, boxes, setBoxes, setAndUpdateBoxes, scaleFactorX, scaleFactorY, isAnnotationVisible]);
+    }, [selectedBoxId, setBoxes, setAndUpdateBoxes, scaleFactorX, scaleFactorY, isAnnotationVisible]);
 
     const isEventAtBottomRight = (event: React.MouseEvent<HTMLElement>) => {
         const target = event.target as HTMLElement;
