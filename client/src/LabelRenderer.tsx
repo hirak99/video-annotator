@@ -195,7 +195,8 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                             border: `${outlineBorder}px solid ${boxColor}`,
                             background: `${boxBg}`,
                             pointerEvents: 'auto',
-                            boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : '0 2px 5px rgba(0, 0, 0, 0.1)',
+                            // boxShadow params: h-offset, v-offset, blur-rad, spread-rad, color, [inset: bool = false].
+                            boxShadow: box.id === selectedBoxId ? '0 0 0 3px #1976d2, 0 0 8px 2px #1976d2' : '0 0 5px rgba(0, 0, 0, 0.1)',
                             zIndex: box.id === selectedBoxId ? 2 : 1,
                         }}
                         onMouseDown={(event) => {
