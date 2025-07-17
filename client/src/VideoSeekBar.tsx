@@ -10,16 +10,22 @@ interface VideoSeekBarProps {
     width: number; // width of the seek bar in pixels
     thumbSpriteUrl: string;
     playerRef: React.RefObject<HTMLVideoElement | null>;
+    onSeekEnd?: () => void; // called by parent after seek is complete
 }
 
-const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
-    duration,
-    currentTime,
-    onSeek,
-    width,
-    thumbSpriteUrl,
-    playerRef,
-}) => {
+const VideoSeekBar = React.forwardRef<{
+    resetDragTime: () => void;
+}, VideoSeekBarProps>((
+    {
+        duration,
+        currentTime,
+        onSeek,
+        width,
+        thumbSpriteUrl,
+        playerRef,
+    },
+    ref
+) => {
     const [isDragging, setIsDragging] = useState(false);
     // If set, will use this as position instead of the current time.
     const [dragTime, setDragTime] = useState<number | null>(null);
@@ -55,7 +61,7 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
         if (dragTime !== null) {
             onSeek(dragTime);
         }
-        setDragTime(null); // Reset dragTime so seekbar follows currentTime again
+        // Do NOT setDragTime(null) here; parent will call onSeekEnd after seek is complete
     };
 
     const updateDragTime = (clientX: number) => {
@@ -74,6 +80,11 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
         const time = (x / rect.width) * duration;
         onSeek(time);
     };
+
+    // Expose a resetDragTime method for parent to call
+    React.useImperativeHandle(ref, () => ({
+        resetDragTime: () => setDragTime(null),
+    }));
 
     return (
         <div
@@ -140,6 +151,6 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
             />
         </div>
     );
-};
+});
 
 export default VideoSeekBar;

@@ -21,6 +21,10 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 };
 
 const VideoPlayer: React.FC = () => {
+    // Ref for VideoSeekBar to control dragTime reset after seek
+    const seekBarRef = useRef<{ resetDragTime: () => void }>(null);
+    // Ref to track if a seek is pending from the seekbar
+    const pendingSeek = useRef(false);
 
     const [username, setUsername] = useState<string | null>(null);
     // Unique client id for socket event filtering
@@ -244,7 +248,13 @@ const VideoPlayer: React.FC = () => {
     React.useEffect(() => {
         const video = playerRef.current;
         if (!video) return;
-        const handleSeeked = () => setSeeking(false);
+        const handleSeeked = () => {
+            setSeeking(false);
+            if (pendingSeek.current) {
+                seekBarRef.current?.resetDragTime();
+                pendingSeek.current = false;
+            }
+        };
         video.addEventListener('seeked', handleSeeked);
         return () => {
             video.removeEventListener('seeked', handleSeeked);
@@ -335,10 +345,12 @@ const VideoPlayer: React.FC = () => {
                         />
 
                         <VideoSeekBar
+                            ref={seekBarRef}
                             duration={playerRef.current ? playerRef.current.duration : 0}
                             currentTime={currentTime}
                             onSeek={(time) => {
                                 if (playerRef.current) {
+                                    pendingSeek.current = true;
                                     playerRef.current.currentTime = time;
                                 }
                             }}
