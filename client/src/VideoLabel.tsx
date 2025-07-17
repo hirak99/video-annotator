@@ -145,12 +145,12 @@ const VideoPlayer: React.FC = () => {
                 }
             };
             const onWaiting = () => setBuffering(true);
-            const onPlaying = () => setBuffering(false);
+            const onCanPlay = () => setBuffering(false);
 
             currentPlayer.addEventListener('play', onPlay);
             currentPlayer.addEventListener('pause', onPause);
             currentPlayer.addEventListener('waiting', onWaiting);
-            currentPlayer.addEventListener('playing', onPlaying);
+            currentPlayer.addEventListener('canplay', onCanPlay);
 
             // Set initial state
             setIsPlaying(!currentPlayer.paused && !currentPlayer.ended);
@@ -165,7 +165,7 @@ const VideoPlayer: React.FC = () => {
                 currentPlayer.removeEventListener('play', onPlay);
                 currentPlayer.removeEventListener('pause', onPause);
                 currentPlayer.removeEventListener('waiting', onWaiting);
-                currentPlayer.removeEventListener('playing', onPlaying);
+                currentPlayer.removeEventListener('canplay', onCanPlay);
                 if (rafId !== null) {
                     cancelAnimationFrame(rafId);
                 }
