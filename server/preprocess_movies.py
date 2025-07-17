@@ -52,7 +52,7 @@ class ProcessedMovie:
                 self._original_fname,
                 "-vf",
                 f"fps=1/{_THUMBNAIL_SECS},scale={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}",
-                f"{temp_dir}/_temp_thumb_%d.jpg",
+                f"{temp_dir}/_temp_thumb_%05d.jpg",
             ]
         )
 
