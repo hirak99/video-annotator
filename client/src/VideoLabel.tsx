@@ -389,19 +389,6 @@ const VideoPlayer: React.FC = () => {
                             }}
                         />
 
-                        <VideoSeekBar
-                            duration={playerRef.current ? playerRef.current.duration : 0}
-                            currentTime={currentTime}
-                            onSeek={(time: number) => {
-                                if (playerRef.current) {
-                                    playerRef.current.currentTime = time;
-                                }
-                            }}
-                            width={videoDimensions.displayWidth}
-                            thumbSpriteUrl={thumbSpriteUrl}
-                            playerRef={playerRef}
-                        />
-
                         {saving &&
                             <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
                                 Saving...
@@ -439,6 +426,21 @@ const VideoPlayer: React.FC = () => {
                             labelTypes={labelTypes}
                         />
                     </div>
+
+                    {/* Video Seek Bar */}
+                    <VideoSeekBar
+                        duration={playerRef.current ? playerRef.current.duration : 0}
+                        currentTime={currentTime}
+                        onSeek={(time: number) => {
+                            if (playerRef.current) {
+                                playerRef.current.currentTime = time;
+                            }
+                        }}
+                        width={videoDimensions.displayWidth}
+                        thumbSpriteUrl={thumbSpriteUrl}
+                        playerRef={playerRef}
+                    />
+
                     {/* Video Seek Controls */}
                     <div className="media-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 1); }}>⏪ -1s</button>
