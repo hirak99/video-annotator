@@ -7,6 +7,7 @@ import LabelRenderer from './LabelRenderer';
 import { useNavigate } from 'react-router';
 import { generateRandomString } from './utils'
 import ThumbnailPreview from './ThumbnailPreview';
+import VideoSeekBar from './VideoSeekBar';
 import Sidebar from './Sidebar';
 
 axios.defaults.withCredentials = true;
@@ -313,7 +314,7 @@ const VideoPlayer: React.FC = () => {
                         <video
                             ref={playerRef}
                             src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
-                            controls
+                            // controls
                             controlsList='nofullscreen'  // Seems Firefox does not respect this.
                             disablePictureInPicture
                             muted
@@ -323,13 +324,33 @@ const VideoPlayer: React.FC = () => {
                             // Could help with error "fetching process of the media was abotrted at user's request".
                             onAbort={() => console.debug('Video fetch aborted')}
                             style={{ width: '100%', backgroundColor: 'black' }}
+                            onClick={() => {
+                                // Play / pause.
+                                if (!playerRef.current) return;
+                                if (playerRef.current.paused) {
+                                    playerRef.current.play();
+                                } else {
+                                    playerRef.current.pause();
+                                }
+                            }}
                         />
 
-                        <ThumbnailPreview
+                        <VideoSeekBar
+                            duration={playerRef.current ? playerRef.current.duration : 0}
+                            currentTime={currentTime}
+                            onSeek={(time) => {
+                                if (playerRef.current) {
+                                    playerRef.current.currentTime = time;
+                                }
+                            }}
+                            width={videoDimensions.displayWidth}
+                        />
+
+                        {false && <ThumbnailPreview
                             thumbSpriteUrl={thumbSpriteUrl}
                             playerRef={playerRef as React.RefObject<HTMLVideoElement>}
                             videoDimensions={videoDimensions}
-                        />
+                        />}
 
                         {saving &&
                             <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
@@ -369,7 +390,12 @@ const VideoPlayer: React.FC = () => {
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 0.1); }}>-0.1s</button>
 
                         {/* Play / pause button */}
-                        <button className="media-btn" onClick={() => {
+                        <button className="media-btn" style={{
+                            padding: '4px 12px',
+                            borderRadius: '4px',
+                            border: '1px solid',
+                            color: '#ccc',
+                        }} onClick={() => {
                             if (!playerRef.current) return;
                             if (playerRef.current.paused) {
                                 playerRef.current.play();
