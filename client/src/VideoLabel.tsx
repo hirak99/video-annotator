@@ -21,6 +21,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 };
 
 const VideoPlayer: React.FC = () => {
+    const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [username, setUsername] = useState<string | null>(null);
     // Unique client id for socket event filtering
     const clientIdRef = useRef<string>(generateRandomString(16));
@@ -131,9 +132,11 @@ const VideoPlayer: React.FC = () => {
         const currentPlayer = playerRef.current;
         if (currentPlayer) {
             const onPlay = () => {
+                setIsPlaying(true);
                 rafId = requestAnimationFrame(update);
             };
             const onPause = () => {
+                setIsPlaying(false);
                 if (rafId !== null) {
                     cancelAnimationFrame(rafId);
                     rafId = null;
@@ -141,6 +144,8 @@ const VideoPlayer: React.FC = () => {
             };
             currentPlayer.addEventListener('play', onPlay);
             currentPlayer.addEventListener('pause', onPause);
+            // Set initial state
+            setIsPlaying(!currentPlayer.paused && !currentPlayer.ended);
             // Start if already playing
             if (!currentPlayer.paused && !currentPlayer.ended) {
                 rafId = requestAnimationFrame(update);
@@ -430,13 +435,13 @@ const VideoPlayer: React.FC = () => {
                             color: '#ccc',
                         }} onClick={() => {
                             if (!playerRef.current) return;
-                            if (playerRef.current.paused) {
+                            if (!isPlaying) {
                                 playerRef.current.play();
                             } else {
                                 playerRef.current.pause();
                             }
                         }}>
-                            {playerRef.current && playerRef.current.paused ? '▶️' : '⏸️'}
+                            {isPlaying ? '⏸️' : '▶️'}
                         </button>
 
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime + 0.1); }}>+0.1s</button>
