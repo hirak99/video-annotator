@@ -10,7 +10,11 @@ _PROCESSED_ROOT = "./_persistent_cache"
 _THUMBNAIL_SPRITE_FNAME = "thumbnail_sprite.jpg"
 # If you change this, reflect it in the client.
 # Also delete the persistent cache to rebuild.
-_THUMBNAIL_SECS = 10
+_THUMBNAIL_SECS = 5
+
+# Thumbnail size (must match client)
+_THUMBNAIL_WIDTH = 160
+_THUMBNAIL_HEIGHT = 90
 
 
 # Creates movie sprites (and may be later process the movie for better streaming as well).
@@ -47,7 +51,7 @@ class ProcessedMovie:
                 "-i",
                 self._original_fname,
                 "-vf",
-                f"fps=1/{_THUMBNAIL_SECS}",
+                f"fps=1/{_THUMBNAIL_SECS},scale={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}",
                 f"{temp_dir}/_temp_thumb_%d.jpg",
             ]
         )

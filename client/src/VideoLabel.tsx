@@ -19,6 +19,11 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
     return axios.get(`${BACKEND_URL}${endpoint}${id ? `/${id}` : ''}`);
 };
 
+const THUMBNAIL_WIDTH = 160; // Must match server
+const THUMBNAIL_HEIGHT = 90; // Must match server
+const SPRITE_COLS = 10; // Must match montage -tile 10x
+const THUMBNAIL_SECS = 5; // Must match server
+
 const VideoPlayer: React.FC = () => {
 
     const [username, setUsername] = useState<string | null>(null);
@@ -37,6 +42,16 @@ const VideoPlayer: React.FC = () => {
     const [videoFiles, setVideoFiles] = useState<any[]>([]);
     const [labelTypes, setLabelTypes] = useState<LabelType[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);
+
+    // Thumbnail sprite URL fetched from server
+    const [thumbSpriteUrl, setThumbSpriteUrl] = useState<string>("");
+
+    useEffect(() => {
+        if (!BACKEND_URL) return;
+        // Sprite is now served directly as image/jpeg
+        setThumbSpriteUrl(`${BACKEND_URL}/api/thumbnail-sprite/${currentVideoIdx}`);
+    }, [currentVideoIdx]);
+
     const [videoDimensions, setVideoDimensions] = useState({
         naturalWidth: 0,
         naturalHeight: 0,
@@ -48,6 +63,12 @@ const VideoPlayer: React.FC = () => {
     const saving = savingCount > 0;
     const playerRef = useRef<HTMLVideoElement>(null);
     const navigate = useNavigate();
+
+    // Thumbnail preview state
+    const [showThumbPreview, setShowThumbPreview] = useState(false);
+    const [thumbPreviewX, setThumbPreviewX] = useState(0);
+    const [thumbPreviewTime, setThumbPreviewTime] = useState(0);
+    const [isSeekingBarActive, setIsSeekingBarActive] = useState(false);
 
     // Helper to show "Saving..." during any label save operation (supports multiple concurrent ops)
     const withSaving = <T,>(promise: Promise<T>) => {
@@ -334,53 +355,136 @@ const VideoPlayer: React.FC = () => {
                 <div style={{ width: '70%' }}>
                     {/* Video and boxes. Everything in this div must have relative positioning. */}
                     <div style={{ position: 'relative' }}>
-                        {/* Video Player */}
-                        <video
-                            ref={playerRef}
-                            src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
-                            controls
-                            controlsList='nofullscreen'  // Seems Firefox does not respect this.
-                            disablePictureInPicture
-                            muted
-                            onTimeUpdate={handleTimeUpdate}
-                            onLoadedMetadata={handleVideoLoad}
-                            onError={handleVideoError}
-                            // Could help with error "fetching process of the media was abotrted at user's request".
-                            onAbort={() => console.debug('Video fetch aborted')}
-                            style={{ width: '100%', backgroundColor: 'black' }}
-                        />
+                    {/* Video Player */}
+                    <video
+                        ref={playerRef}
+                        src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
+                        controls
+                        controlsList='nofullscreen'  // Seems Firefox does not respect this.
+                        disablePictureInPicture
+                        muted
+                        onTimeUpdate={handleTimeUpdate}
+                        onLoadedMetadata={handleVideoLoad}
+                        onError={handleVideoError}
+                        // Could help with error "fetching process of the media was abotrted at user's request".
+                        onAbort={() => console.debug('Video fetch aborted')}
+                        style={{ width: '100%', backgroundColor: 'black' }}
+                    />
 
-                        {saving &&
-                            <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
-                                Saving...
-                            </div>
-                        }
-                        {loading &&
-                            <div className="seeking-overlay">
-                                <div className="seeking-spinner"></div>
-                                <div className="seeking-text">Loading...</div>
-                            </div>
-                        }
-                        {seeking &&
-                            <div className="seeking-overlay">
-                                <div className="seeking-spinner"></div>
-                                <div className="seeking-text">Seeking...</div>
-                            </div>
-                        }
+                    {/* Thumbnail preview overlay */}
+                    {thumbSpriteUrl && playerRef.current && playerRef.current.duration > 0 && (
+                        <div
+                            style={{
+                                position: 'absolute',
+                                left: 0,
+                                bottom: 0,
+                                width: '100%',
+                                height: 36, // Height of the timeline bar area (adjust as needed)
+                                cursor: 'pointer',
+                                zIndex: 10,
+                                background: 'transparent',
+                            }}
+                            onMouseDown={e => {
+                                setIsSeekingBarActive(true);
+                                // Also update preview immediately
+                                const rect = (e.target as HTMLDivElement).getBoundingClientRect();
+                                const x = e.clientX - rect.left;
+                                setThumbPreviewX(x);
+                                const duration = playerRef.current!.duration;
+                                const time = Math.max(0, Math.min(duration, (x / rect.width) * duration));
+                                setThumbPreviewTime(time);
+                                setShowThumbPreview(true);
+                            }}
+                            onMouseUp={() => {
+                                setIsSeekingBarActive(false);
+                                setShowThumbPreview(false);
+                            }}
+                            onMouseMove={e => {
+                                if (!isSeekingBarActive) return;
+                                const rect = (e.target as HTMLDivElement).getBoundingClientRect();
+                                const x = e.clientX - rect.left;
+                                setThumbPreviewX(x);
+                                // Calculate time from x
+                                const duration = playerRef.current!.duration;
+                                const time = Math.max(0, Math.min(duration, (x / rect.width) * duration));
+                                setThumbPreviewTime(time);
+                                setShowThumbPreview(true);
+                            }}
+                            onMouseLeave={() => {
+                                setIsSeekingBarActive(false);
+                                setShowThumbPreview(false);
+                            }}
+                        >
+                            {showThumbPreview && isSeekingBarActive && (
+                                <div
+                                    style={{
+                                        position: 'absolute',
+                                        left: Math.max(0, Math.min(thumbPreviewX - THUMBNAIL_WIDTH / 2, videoDimensions.displayWidth - THUMBNAIL_WIDTH)),
+                                        bottom: 36, // Show above the timeline overlay
+                                        width: THUMBNAIL_WIDTH,
+                                        height: THUMBNAIL_HEIGHT,
+                                        backgroundImage: `url(${thumbSpriteUrl})`,
+                                        backgroundRepeat: 'no-repeat',
+                                        backgroundColor: '#222',
+                                        border: '1px solid #888',
+                                        borderRadius: 4,
+                                        boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                                        pointerEvents: 'none',
+                                        zIndex: 20,
+                                        // Calculate background position
+                                        backgroundPosition: (() => {
+                                        // Which thumbnail index?
+                                        // const duration = playerRef.current!.duration;
+                                        // const totalThumbs = Math.ceil(duration / THUMBNAIL_SECS);
+                                        const idx = Math.floor(thumbPreviewTime / THUMBNAIL_SECS);
+                                        const col = idx % SPRITE_COLS;
+                                        const row = Math.floor(idx / SPRITE_COLS);
+                                        return `-${col * THUMBNAIL_WIDTH}px -${row * THUMBNAIL_HEIGHT}px`;
+                                    })(),
+                                        backgroundSize: (() => {
+                                            // Calculate total columns and rows
+                                            const duration = playerRef.current!.duration;
+                                            const totalThumbs = Math.ceil(duration / THUMBNAIL_SECS);
+                                            const rows = Math.ceil(totalThumbs / SPRITE_COLS);
+                                            return `${SPRITE_COLS * THUMBNAIL_WIDTH}px ${rows * THUMBNAIL_HEIGHT}px`;
+                                        })(),
+                                    }}
+                                />
+                            )}
+                        </div>
+                    )}
 
-                        {/* Label Boxes */}
-                        <LabelRenderer
-                            boxes={boxes}
-                            currentTime={currentTime}
-                            videoDimensions={videoDimensions}
-                            handleUpdateBox={handleUpdateBox}
-                            setBoxes={setBoxes}
-                            setAndUpdateBoxes={setAndUpdateBoxes}
-                            selectedBoxId={selectedBoxId}
-                            setSelectedBoxId={setSelectedBoxId}
-                            labelTypes={labelTypes}
-                        />
-                    </div>
+                    {saving &&
+                        <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+                            Saving...
+                        </div>
+                    }
+                    {loading &&
+                        <div className="seeking-overlay">
+                            <div className="seeking-spinner"></div>
+                            <div className="seeking-text">Loading...</div>
+                        </div>
+                    }
+                    {seeking &&
+                        <div className="seeking-overlay">
+                            <div className="seeking-spinner"></div>
+                            <div className="seeking-text">Seeking...</div>
+                        </div>
+                    }
+
+                    {/* Label Boxes */}
+                    <LabelRenderer
+                        boxes={boxes}
+                        currentTime={currentTime}
+                        videoDimensions={videoDimensions}
+                        handleUpdateBox={handleUpdateBox}
+                        setBoxes={setBoxes}
+                        setAndUpdateBoxes={setAndUpdateBoxes}
+                        selectedBoxId={selectedBoxId}
+                        setSelectedBoxId={setSelectedBoxId}
+                        labelTypes={labelTypes}
+                    />
+                </div>
                     {/* Video Seek Controls */}
                     <div className="media-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <button className="media-btn" onClick={() => { seekToTime(playerRef.current!.currentTime - 1); }}>⏪ -1s</button>

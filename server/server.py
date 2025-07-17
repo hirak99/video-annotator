@@ -255,6 +255,25 @@ class MainApp:
             video_file = video["video_file"]
             return _stream_video(self._repack_video(video_file), request=request)
 
+        @self.app.route("/api/thumbnail-sprite/<int:video_id>", methods=["GET"])
+        @_login_required
+        def get_thumbnail_sprite(video_id: int):
+            # Serve the thumbnail sprite binary data with correct MIME type
+            sprite_fname = processed_movie_data[video_id].thumbnail_sprite_fname
+            if not os.path.exists(sprite_fname):
+                return (
+                    jsonify(
+                        {
+                            "status": "error",
+                            "message": f"Thumbnail sprite not found for video {video_id}",
+                        }
+                    ),
+                    404,
+                )
+            with open(sprite_fname, "rb") as f:
+                data = f.read()
+            return flask.Response(data, mimetype="image/jpeg")
+
         # @self.app.before_request
         # def clear_login_on_reload():
         #     flask.session.clear()
