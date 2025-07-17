@@ -1,6 +1,6 @@
 import { TinyColor } from '@ctrl/tinycolor';
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { AnnotationProps } from './types';
+import { AnnotationProps, LabelType } from './types';
 import { hashToHSLColor, stringToHash } from './utils';
 
 interface LabelRendererProps {
@@ -37,7 +37,7 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
     const outlineBorder = 2;
 
     const labelTypeMap = useMemo(() => {
-        const m = new Map<string, import('./types').LabelType>();
+        const m = new Map<string, LabelType>();
         for (const lt of labelTypes) {
             m.set(lt.name, lt);
         }
