@@ -345,6 +345,8 @@ const VideoPlayer: React.FC = () => {
                             onTimeUpdate={handleTimeUpdate}
                             onLoadedMetadata={handleVideoLoad}
                             onError={handleVideoError}
+                            // Could help with error "fetching process of the media was abotrted at user's request".
+                            onAbort={() => console.debug('Video fetch aborted')}
                             style={{ width: '100%', backgroundColor: 'black' }}
                         />
 
