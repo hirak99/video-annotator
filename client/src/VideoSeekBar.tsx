@@ -55,6 +55,7 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
         if (dragTime !== null) {
             onSeek(dragTime);
         }
+        setDragTime(null); // Reset dragTime so seekbar follows currentTime again
     };
 
     const updateDragTime = (clientX: number) => {
