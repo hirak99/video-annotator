@@ -24,11 +24,14 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
     const [isDragging, setIsDragging] = useState(false);
     // If set, will use this as position instead of the current time.
     const [dragTime, setDragTime] = useState<number | null>(null);
+    const [isHovering, setIsHovering] = useState(false);
+    const [hoverX, setHoverX] = useState<number | null>(null);
+    const [hoverTime, setHoverTime] = useState<number | null>(null);
     const barRef = useRef<HTMLDivElement>(null);
     // Track if a seek is pending from the seekbar
     const pendingSeek = useRef(false);
 
-    const height = 6;
+    const height = 8;
 
     // Calculate the position of the thumb based on currentTime or dragTime
     const position = (() => {
@@ -37,7 +40,7 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
         return Math.min(Math.max(0, time / duration), 1) * width;
     })();
 
-    // Handle mouse events for dragging
+    // Handle mouse events for dragging and hover
     const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
         if (!barRef.current) return;
         setIsDragging(true);
@@ -46,8 +49,12 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
     };
 
     const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-        if (!isDragging || !barRef.current) return;
-        updateDragTime(e.clientX);
+        if (!barRef.current) return;
+        if (isDragging) {
+            updateDragTime(e.clientX);
+        } else {
+            updateHover(e.clientX);
+        }
     };
 
     const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -60,6 +67,19 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
             onSeek(dragTime);
         }
         // Do NOT setDragTime(null) here; will reset after seeked event
+    };
+
+    const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+        setIsHovering(true);
+        if (barRef.current) {
+            updateHover(e.clientX);
+        }
+    };
+
+    const handleMouseLeave = () => {
+        setIsHovering(false);
+        setHoverX(null);
+        setHoverTime(null);
     };
 
     const updateDragTime = (clientX: number) => {
@@ -77,6 +97,16 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
         const x = Math.min(Math.max(0, e.clientX - rect.left), rect.width);
         const time = (x / rect.width) * duration;
         onSeek(time);
+    };
+
+    // Update hover state
+    const updateHover = (clientX: number) => {
+        if (!barRef.current) return;
+        const rect = barRef.current.getBoundingClientRect();
+        const x = Math.min(Math.max(0, clientX - rect.left), rect.width);
+        const time = (x / rect.width) * duration;
+        setHoverX(x);
+        setHoverTime(time);
     };
 
     // Listen for seeked event on the video element to reset dragTime after seek is complete
@@ -102,7 +132,7 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
                 position: 'relative',
                 width: width,
                 height: height,
-                backgroundColor: '#444',
+                backgroundColor: '#ccc',
                 borderRadius: height / 2,
                 cursor: 'pointer',
                 userSelect: 'none',
@@ -112,8 +142,24 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
             onClick={handleClick}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
         >
-            {/* Thumbnail preview (only show while dragging) */}
+            {/* Thumbnail preview (show on hover or drag) */}
+            {(isHovering && hoverTime !== null && hoverX !== null) && (
+                <ThumbnailPreview
+                    thumbSpriteUrl={thumbSpriteUrl}
+                    playerRef={playerRef as React.RefObject<HTMLVideoElement>}
+                    previewTime={hoverTime}
+                    thumbX={Math.max(
+                        0,
+                        Math.min(
+                            hoverX - THUMBNAIL_WIDTH / 2,
+                            width - THUMBNAIL_WIDTH
+                        )
+                    )}
+                />
+            )}
             {isDragging && dragTime !== null && (
                 <ThumbnailPreview
                     thumbSpriteUrl={thumbSpriteUrl}

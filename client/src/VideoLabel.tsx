@@ -22,6 +22,7 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
 
 const VideoPlayer: React.FC = () => {
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
+    const [buffering, setBuffering] = useState<boolean>(false);
     const [username, setUsername] = useState<string | null>(null);
     // Unique client id for socket event filtering
     const clientIdRef = useRef<string>(generateRandomString(16));
@@ -133,6 +134,7 @@ const VideoPlayer: React.FC = () => {
         if (currentPlayer) {
             const onPlay = () => {
                 setIsPlaying(true);
+                setBuffering(false);
                 rafId = requestAnimationFrame(update);
             };
             const onPause = () => {
@@ -142,10 +144,18 @@ const VideoPlayer: React.FC = () => {
                     rafId = null;
                 }
             };
+            const onWaiting = () => setBuffering(true);
+            const onPlaying = () => setBuffering(false);
+
             currentPlayer.addEventListener('play', onPlay);
             currentPlayer.addEventListener('pause', onPause);
+            currentPlayer.addEventListener('waiting', onWaiting);
+            currentPlayer.addEventListener('playing', onPlaying);
+
             // Set initial state
             setIsPlaying(!currentPlayer.paused && !currentPlayer.ended);
+            setBuffering(false);
+
             // Start if already playing
             if (!currentPlayer.paused && !currentPlayer.ended) {
                 rafId = requestAnimationFrame(update);
@@ -154,6 +164,8 @@ const VideoPlayer: React.FC = () => {
             return () => {
                 currentPlayer.removeEventListener('play', onPlay);
                 currentPlayer.removeEventListener('pause', onPause);
+                currentPlayer.removeEventListener('waiting', onWaiting);
+                currentPlayer.removeEventListener('playing', onPlaying);
                 if (rafId !== null) {
                     cancelAnimationFrame(rafId);
                 }
@@ -356,7 +368,7 @@ const VideoPlayer: React.FC = () => {
                         <video
                             ref={playerRef}
                             src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
-                            // controls
+                            controls
                             controlsList='nofullscreen'  // Seems Firefox does not respect this.
                             disablePictureInPicture
                             muted
@@ -405,6 +417,12 @@ const VideoPlayer: React.FC = () => {
                             <div className="seeking-overlay">
                                 <div className="seeking-spinner"></div>
                                 <div className="seeking-text">Seeking...</div>
+                            </div>
+                        }
+                        {buffering &&
+                            <div className="seeking-overlay">
+                                <div className="seeking-spinner"></div>
+                                <div className="seeking-text">Buffering...</div>
                             </div>
                         }
 
