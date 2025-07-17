@@ -239,16 +239,9 @@ const LabelRenderer: React.FC<LabelRendererProps> = ({
                                 }
                             }}
                             onMouseMove={(event) => {
-                                const boxRef = event.currentTarget;
-                                const boxId = boxRef.getAttribute('data-box-id');
-                                const box = boxes.find(b => b.id === boxId);
-                                if (box) {
-                                    if (isEventAtBottomRight(event)) {
-                                        boxRef.style.cursor = 'se-resize';
-                                    } else {
-                                        boxRef.style.cursor = 'move';
-                                    }
-                                }
+                                // Event is at bottom right of the current box.
+                                const isBR = isEventAtBottomRight(event);
+                                event.currentTarget.style.cursor = isBR ? 'se-resize' : 'move';
                             }}
                         >
                             {box.originalIndex + 1}. {box.name}
