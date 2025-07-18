@@ -37,7 +37,6 @@ The main reason it does not do them is that I did not need them yet. It is possi
 
 - No support for keyframe or moving rectangles.
 - No support for segmentation or arbitrary polygonal region-of-interests.
-- No support for replication, i.e. multiple independent labeling for the same video.
 - Video file names must be different (even if they are within different directories).
 
 ## Why another one?
