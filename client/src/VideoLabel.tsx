@@ -377,6 +377,7 @@ const VideoPlayer: React.FC = () => {
                             onError={handleVideoError}
                             onLoadedMetadata={handleVideoLoad}
                             onTimeUpdate={handleTimeUpdate}
+                            preload='metadata'
                             ref={playerRef}
                             src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
                             style={{ width: '100%', backgroundColor: 'black' }}
