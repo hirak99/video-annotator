@@ -299,6 +299,8 @@ const VideoPlayer: React.FC = () => {
 
     // Set loading to true when currentVideoIdx changes (new video selected)
     useEffect(() => {
+        // Reset currentTime to 0 on new video load
+        setCurrentTime(0);
         // Re-enable safety.
         setEnableEdit(false);
         // Display "Loading...". Cleared on load.
