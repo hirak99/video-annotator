@@ -357,18 +357,12 @@ const VideoPlayer: React.FC = () => {
                     <div style={{ position: 'relative' }}>
                         {/* Video Player */}
                         <video
-                            ref={playerRef}
-                            src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
                             controls
                             controlsList='nofullscreen'  // Seems Firefox does not respect this.
                             disablePictureInPicture
                             muted
-                            onTimeUpdate={handleTimeUpdate}
-                            onLoadedMetadata={handleVideoLoad}
-                            onError={handleVideoError}
                             // Could help with error "fetching process of the media was abotrted at user's request".
                             onAbort={() => console.debug('Video fetch aborted')}
-                            style={{ width: '100%', backgroundColor: 'black' }}
                             onClick={() => {
                                 // Play / pause.
                                 if (!playerRef.current) return;
@@ -378,6 +372,12 @@ const VideoPlayer: React.FC = () => {
                                     playerRef.current.pause();
                                 }
                             }}
+                            onError={handleVideoError}
+                            onLoadedMetadata={handleVideoLoad}
+                            onTimeUpdate={handleTimeUpdate}
+                            ref={playerRef}
+                            src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
+                            style={{ width: '100%', backgroundColor: 'black' }}
                         />
 
                         {saving &&
