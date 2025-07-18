@@ -26,6 +26,16 @@ const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
         return null;
     }
 
+    // Format time in [h:]mm:ss
+    const formatTime = (seconds: number): string => {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = Math.floor(seconds % 60);
+        const mm = m < 10 ? `0${m}` : m;
+        const ss = s < 10 ? `0${s}` : s;
+        return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
+    };
+
     // Thumbnail sprite logic
     const idx = Math.floor(previewTime / THUMBNAIL_SECS);
     const col = idx % SPRITE_COLS;
@@ -55,7 +65,23 @@ const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
                 backgroundSize: `${SPRITE_COLS * THUMBNAIL_WIDTH}px ${rows * THUMBNAIL_HEIGHT}px`,
                 transition: 'left 0.05s linear',
             }}
-        />
+        >
+            <div
+                style={{
+                    position: 'absolute',
+                    top: 2,
+                    left: 2,
+                    color: 'white',
+                    textShadow: '1px 1px 2px black',
+                    fontSize: 12,
+                    fontWeight: 'bold',
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                }}
+            >
+                {formatTime(previewTime)}
+            </div>
+        </div>
     );
 };
 
