@@ -21,7 +21,8 @@ const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
     if (
         !thumbSpriteUrl ||
         !playerRef.current ||
-        playerRef.current.duration <= 0
+        playerRef.current.duration <= 0 ||
+        isNaN(previewTime) // Can happen right after load
     ) {
         return null;
     }
