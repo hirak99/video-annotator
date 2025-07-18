@@ -36,8 +36,12 @@ const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
         return h > 0 ? `${h}:${mm}:${ss}` : `${mm}:${ss}`;
     };
 
-    // Thumbnail sprite logic
-    const idx = Math.floor(previewTime / THUMBNAIL_SECS);
+    // Select the right row and col from the sprite.
+    // Note that ffmpeg samples from the middle.
+    // E.g. for 1/10 fps, it picks frames at 5s, 15s, 25s etc.
+    // So we use idx=0 for [0, 5). Then onwards idx=0 for [5, 15), idx=1 for [15, 25) and so on.
+    const adjustedTime = previewTime - THUMBNAIL_SECS / 2;
+    const idx = Math.max(0, Math.floor(adjustedTime / THUMBNAIL_SECS));
     const col = idx % SPRITE_COLS;
     const row = Math.floor(idx / SPRITE_COLS);
 
