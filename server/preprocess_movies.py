@@ -45,19 +45,21 @@ class ProcessedMovie:
         os.makedirs(temp_dir, exist_ok=True)
 
         # Make thumbnails.
-        subprocess.run(
+        subprocess.check_call(
             [
                 "ffmpeg",
                 "-i",
                 self._original_fname,
                 "-vf",
-                f"fps=1/{_THUMBNAIL_SECS},scale={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}",
+                f"fps=1/{_THUMBNAIL_SECS},scale={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}:force_original_aspect_ratio=decrease,pad={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}:(ow-iw)/2:(oh-ih)/2",
+                "-vsync",
+                "vfr",
                 f"{temp_dir}/_temp_thumb_%05d.jpg",
             ]
         )
 
         # Make a sprite.
-        subprocess.run(
+        subprocess.check_call(
             [
                 "montage",
                 f"{temp_dir}/_temp_thumb_*.jpg",
