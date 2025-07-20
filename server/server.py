@@ -31,6 +31,7 @@ class _User(TypedDict):
 class _LabelProperties(TypedDict):
     name: str
     allow_overlap: bool
+    color: str
 
 
 class _VideoFile(TypedDict):
