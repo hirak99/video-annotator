@@ -37,6 +37,8 @@ class _LabelProperties(TypedDict):
 class _VideoFile(TypedDict):
     video_file: str
     label_file: str
+    # This need not be declared, will be loaded from the .json file +r attribute.
+    readonly: bool
 
 
 # Unused functions for flask endpoints.
@@ -178,6 +180,13 @@ def add_common_endpoints(
         for video_id, video in enumerate(video_files):
             file_desc.append(video.copy())
             file_desc[-1]["video_file"] = os.path.basename(video["video_file"])
+
+            # Check if the label_file exists and is readonly.
+            readonly = os.path.exists(video["label_file"]) and not os.access(
+                video["label_file"], os.W_OK
+            )
+            file_desc[-1]["readonly"] = readonly
+
             try:
                 label_count = len(_load_labels(video_id))
                 if label_count > 0:

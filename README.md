@@ -27,6 +27,7 @@ Following are a few examples.
 - **Visual feedback** when it is saving (top left) or skipping the video via seek buttons (overlay on the video).
 - **Backend calls are consolidated** for keyboard edits to save making numerous calls in short succession if user presses and holds down a key.
 - **Safety mechanism for edits** disables editing by default on load, easily disengaged on clicking the button to start editing.
+- **Finalized files** by `chmod a-w` on the label json in server are recognized and exposed in view-only mode.
 - **Thumbnail preview** upon scrubbing the video seek bar.
 
 ### What it does not do

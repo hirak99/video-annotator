@@ -20,6 +20,12 @@ const getBackendPromise = async (endpoint: string, id?: number) => {
     return axios.get(`${BACKEND_URL}${endpoint}${id ? `/${id}` : ''}`);
 };
 
+interface VideoFileProps {
+    video_file: string;
+    label_file: string;  // Not directly used by the client. Server handles save and load to json.
+    readonly: boolean;
+}
+
 const VideoPlayer: React.FC = () => {
     const [isPlaying, setIsPlaying] = useState<boolean>(false);
     const [buffering, setBuffering] = useState<boolean>(false);
@@ -34,7 +40,7 @@ const VideoPlayer: React.FC = () => {
     const [loading, setLoading] = useState(true); // New loading state
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
     const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
-    const [videoFiles, setVideoFiles] = useState<any[]>([]);
+    const [videoFiles, setVideoFiles] = useState<VideoFileProps[]>([]);
     const [labelTypes, setLabelTypes] = useState<LabelType[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);
 
@@ -338,10 +344,12 @@ const VideoPlayer: React.FC = () => {
                             type="checkbox"
                             checked={enableEdit}
                             onChange={e => setEnableEdit(e.target.checked)}
+                            disabled={videoFiles[currentVideoIdx]?.readonly}
                             style={{ marginRight: '6px' }}
                         />
-                        {!enableEdit && <span style={{ color: "red", marginLeft: "5px" }}>For safety, EDITING IS DISABLED. Click to enable.</span>}
-                        {enableEdit && <span style={{ color: "green", marginLeft: "5px" }}>Editing is now enabled.</span>}
+                        {videoFiles[currentVideoIdx]?.readonly ? <span style={{ color: "orange", marginLeft: "5px" }}>File is readonly in the server. Request server admin for edit access.</span> :
+                            enableEdit ? <span style={{ color: "green", marginLeft: "5px" }}>Editing is now enabled.</span> :
+                                <span style={{ color: "red", marginLeft: "5px" }}>For safety, EDITING IS DISABLED. Click to enable.</span>}
                     </label>
                 </div>
                 <button onClick={() => { navigate("/"); }}>Logout</button>
