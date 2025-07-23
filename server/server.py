@@ -237,7 +237,7 @@ class MainApp:
 
         # Preprocess thumbnails etc.
         processed_movie_data: list[preprocess_movies.ProcessedMovie] = []
-        for index, video_file in enumerate(video_files):
+        for video_file in video_files:
             processed_movie_data.append(
                 preprocess_movies.ProcessedMovie(video_file["video_file"])
             )
