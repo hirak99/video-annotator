@@ -8,6 +8,7 @@ import { useNavigate } from 'react-router';
 import { generateRandomString } from './utils'
 import VideoSeekBar from './VideoSeekBar';
 import Sidebar from './Sidebar';
+import VideoSelect from './VideoSelect';
 
 axios.defaults.withCredentials = true;
 
@@ -354,12 +355,11 @@ const VideoPlayer: React.FC = () => {
                 </div>
                 <button onClick={() => { navigate("/"); }}>Logout</button>
             </div>
-            {/* List of videos */}
-            <select className="video-select" value={currentVideoIdx} onChange={(e) => setCurrentVideoIdx(Number(e.target.value))}>
-                {videoFiles.map((file, index) => (
-                    <option key={index} value={index}>{file["video_file"]}</option>
-                ))}
-            </select>
+            <VideoSelect
+                videoFiles={videoFiles}
+                currentVideoIdx={currentVideoIdx}
+                setCurrentVideoIdx={setCurrentVideoIdx}
+            />
 
             <div style={{ display: 'flex' }}> {/* Main container with flex display */}
                 <div style={{ width: '70%' }}>
