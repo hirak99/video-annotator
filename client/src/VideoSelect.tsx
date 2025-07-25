@@ -1,7 +1,19 @@
 import React from 'react';
 import Select from 'react-select';
 
-const VideoSelect = ({ videoFiles, currentVideoIdx, setCurrentVideoIdx }) => {
+interface VideoFileProps {
+    video_file: string;
+    label_file: string;
+    readonly: boolean;
+}
+
+interface VideoSelectProps {
+    videoFiles: VideoFileProps[];
+    currentVideoIdx: number;
+    setCurrentVideoIdx: React.Dispatch<React.SetStateAction<number>>;
+}
+
+const VideoSelect: React.FC<VideoSelectProps> = ({ videoFiles, currentVideoIdx, setCurrentVideoIdx }) => {
     const options = videoFiles.map((file, index) => ({
         value: index,
         label: file.video_file
@@ -9,7 +21,7 @@ const VideoSelect = ({ videoFiles, currentVideoIdx, setCurrentVideoIdx }) => {
 
     const selectedOption = options.find(option => option.value === currentVideoIdx);
 
-    const handleChange = (selectedOption) => {
+    const handleChange = (selectedOption: any) => { // selectedOption type from react-select
         setCurrentVideoIdx(selectedOption ? selectedOption.value : null);
     };
 
