@@ -35,7 +35,11 @@ class _LabelProperties(TypedDict):
 
 
 class _VideoFile(TypedDict):
+    # The path to the video to used.
     video_file: str
+    # Optional. If specified, this will replace the video file name on the UX.
+    video_alias: str
+    # Where the label will be stored.
     label_file: str
     # This need not be declared, will be loaded from the .json file +r attribute.
     readonly: bool
@@ -179,7 +183,11 @@ def add_common_endpoints(
         file_desc: list[_VideoFile] = []
         for video_id, video in enumerate(video_files):
             file_desc.append(video.copy())
-            file_desc[-1]["video_file"] = os.path.basename(video["video_file"])
+
+            if "video_alias" in video:
+                file_desc[-1]["video_file"] = video["video_alias"]
+            else:
+                file_desc[-1]["video_file"] = os.path.basename(video["video_file"])
 
             # Check if the label_file exists and is readonly.
             readonly = os.path.exists(video["label_file"]) and not os.access(
@@ -341,4 +349,5 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     main_app = MainApp()
     port = int(os.getenv("PORT", 8080))
+    logging.info("Serving...")
     main_app.socketio.run(main_app.app, debug=True, host="0.0.0.0", port=port)
