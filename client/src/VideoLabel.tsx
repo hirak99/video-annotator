@@ -335,7 +335,7 @@ const VideoPlayer: React.FC = () => {
     }, [playbackRate]);
 
     return (
-        <div>
+        <div style={{ padding: '4px 4px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                     <label style={{
@@ -355,6 +355,7 @@ const VideoPlayer: React.FC = () => {
                 </div>
                 <button onClick={() => { navigate("/"); }}>Logout</button>
             </div>
+
             <VideoSelect
                 videoFiles={videoFiles}
                 currentVideoIdx={currentVideoIdx}

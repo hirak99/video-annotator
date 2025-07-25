@@ -25,14 +25,41 @@ const VideoSelect: React.FC<VideoSelectProps> = ({ videoFiles, currentVideoIdx, 
         setCurrentVideoIdx(selectedOption ? selectedOption.value : null);
     };
 
+    const customStyles = {
+        control: (provided: any, state: any) => ({ // Using 'any' for simplicity, can be more specific with react-select types
+            ...provided,
+            backgroundColor: '#f0f0f0', // Light grey background
+            borderColor: state.isFocused ? '#888' : '#ccc', // Keep border subtle
+            boxShadow: state.isFocused ? '0 0 0 1px #888' : 'none', // Subtle focus shadow
+            '&:hover': {
+                borderColor: '#888', // Slightly darker border on hover
+            },
+            margin: '4px 0',
+            minHeight: '30px',
+            height: '30px',
+        }),
+        singleValue: (provided: any) => ({ // Using 'any' for simplicity
+            ...provided,
+            color: '#333', // Ensure text color is not greyed out
+        }),
+        input: (provided: any, state: any) => ({
+            ...provided,
+            margin: '0px',
+        }),
+        indicatorsContainer: (provided: any, state: any) => ({
+            ...provided,
+            height: '30px',
+        }),
+    };
+
     return (
         <Select
-            className="video-select"
             value={selectedOption}
             onChange={handleChange}
             options={options}
             isSearchable={true}
             placeholder="Select a video..."
+            styles={customStyles}
         />
     );
 };

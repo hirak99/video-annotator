@@ -68,7 +68,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <div
             style={{
                 width: '30%', // Sidebar takes 30% width.
-                padding: '10px',
+                padding: '10px 0 10px 10px',
                 borderLeft: '1px solid #ccc',
                 overflowY: 'auto',
                 maxHeight: '100vh',
@@ -96,7 +96,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             )}
 
             {/* List of all the annotations. */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0px', paddingRight: '2px' }}>
                 {/* Flex grid for items */}
                 {boxes.map((box, index) => (
                     <SidebarItem
