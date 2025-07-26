@@ -4,7 +4,7 @@ import logging
 import os
 import subprocess
 import typing
-from typing import TypedDict
+from typing import NotRequired, TypedDict
 
 import flask
 from flask import jsonify
@@ -37,8 +37,8 @@ class _LabelProperties(TypedDict):
 class _VideoFile(TypedDict):
     # The path to the video to used.
     video_file: str
-    # Optional. If specified, this will replace the video file name on the UX.
-    video_alias: str
+    # If specified, this alias will be shown instead of file name in the UI.
+    video_alias: NotRequired[str]
     # Where the label will be stored.
     label_file: str
     # This need not be declared, will be loaded from the .json file +r attribute.
