@@ -356,13 +356,15 @@ const VideoPlayer: React.FC = () => {
                 <button onClick={() => { navigate("/"); }}>Logout</button>
             </div>
 
-            <VideoSelect
-                videoFiles={videoFiles}
-                currentVideoIdx={currentVideoIdx}
-                setCurrentVideoIdx={setCurrentVideoIdx}
-            />
+            <div style={{ position: 'relative', zIndex: 1000 }}>
+                <VideoSelect
+                    videoFiles={videoFiles}
+                    currentVideoIdx={currentVideoIdx}
+                    setCurrentVideoIdx={setCurrentVideoIdx}
+                />
+            </div>
 
-            <div style={{ display: 'flex' }}> {/* Main container with flex display */}
+            <div style={{ display: 'flex' }}> {/* Main container with flex display, added margin-top to account for fixed VideoSelect */}
                 <div style={{ width: '70%' }}>
                     {/* Video and boxes. Everything in this div must have relative positioning. */}
                     <div style={{ position: 'relative' }}>
