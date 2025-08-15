@@ -350,4 +350,6 @@ if __name__ == "__main__":
     main_app = MainApp()
     port = int(os.getenv("PORT", 8080))
     logging.info("Serving...")
-    main_app.socketio.run(main_app.app, debug=True, host="0.0.0.0", port=port)
+    main_app.socketio.run(
+        main_app.app, debug=True, host="0.0.0.0", port=port, allow_unsafe_werkzeug=True
+    )
