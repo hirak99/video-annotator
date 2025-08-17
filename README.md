@@ -2,7 +2,7 @@
 
 Demo video -
 
-[![Demo Video](https://img.youtube.com/vi/r6EBCOaYuEo/0.jpg)](https://youtu.be/r6EBCOaYuEo)
+[![Demo Video](https://img.youtube.com/vi/cIWa4ik96no/0.jpg)](https://youtu.be/cIWa4ik96no)
 
 ## Features
 
@@ -19,7 +19,7 @@ Following are a few examples.
 - **Supports multiple workers** simultaneously if multiple users log in via different clients.
 - **Realtime propagation of edits** across all open clients to ensure work is not lost if two people happen to look at the same video via the exposed WebUI.
 - **On the fly MKV to MP4 conversion** to increase browser compatibility. However, full transcoding is not yet supported and must be done as a pre-step if needed.
-- **Basic security** to restic video access to users who have the correct password. However, this is not intended for high-security environments.
+- **Basic security** to restrict video access to users who have the correct password. However, this is not intended for high-security environments.
 - **Real time error hints** to help the user know and correct errors in labeling as they occur. For example, if a label that should be unique is seen to be in two places simultaneously in any frame.
 - **Keyboard shortcuts** for precise alignment and resizing, with contextual tooltips.
 - **Precise media seek controls** for aligning the annotations in time.
@@ -40,13 +40,13 @@ The main reason it does not do them is that I did not need them yet. It is possi
 - No support for segmentation or arbitrary polygonal region-of-interests.
 - Video file names must be different (even if they are within different directories).
 
-## Why another one?
+## Background
 
-In a project that I am working on, I needed annotations for lattice-aligned, mostly static rectangular region-of-interests.
+For a [Video Understanding](https://github.com/hirak99/video-summarizer) project, we needed to annotate a large number of videos with rectangular regions of interest (ROIs).
 
-This is a niche area. There are not many tools available, but there are indeed a few notable ones that already exist.
+This is a common task for machine learning pipelines and applications.
 
-However, I found them to be too powerful and complex for what I needed. I felt the need for a simple, easy to set up tool, that does what I need - and is fun to use. It took about a week to put the initial version together.
+However, the publicly available tools were either too limited in scope or not very easy to configure and use. As a result, I decided to quickly implement a tool that better fitted our needs.
 
 # Running
 
