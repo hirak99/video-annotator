@@ -7,13 +7,13 @@ users:
 
 labels:
   - name: (unknown)
-    allow_overlap: true
+    allow_multiple: true
     color: '#000'
   - name: blur
-    allow_overlap: true
+    allow_multiple: true
     color: 'green'
   - name: object_no_1
-    allow_overlap: false
+    allow_multiple: false
     color: 'red'
 
 videos:

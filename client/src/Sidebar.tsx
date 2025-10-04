@@ -35,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
         for (const box of boxes) {
             const labelType = labelTypes.find(lt => lt.name === box.name);
-            if (labelType && !labelType.allow_overlap) {
+            if (labelType && !labelType.allow_multiple) {
                 if (!overlappingLabels[box.name]) {
                     overlappingLabels[box.name] = [];
                 }

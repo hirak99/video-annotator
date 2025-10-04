@@ -30,7 +30,7 @@ class _User(TypedDict):
 
 class _LabelProperties(TypedDict):
     name: str
-    allow_overlap: bool
+    allow_multiple: bool
     color: str
 
 
