@@ -6,6 +6,29 @@ import string
 import subprocess
 import json
 
+
+def _get_video_duration_sec(fname: str) -> float:
+    """Returns the duration of the video in seconds using ffprobe."""
+    result = subprocess.run(
+        [
+            "ffprobe",
+            "-v",
+            "error",
+            "-show_entries",
+            "format=duration",
+            "-of",
+            "json",
+            fname,
+        ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    info = json.loads(result.stdout)
+    logging.info(f"ffprobe info: {info}")
+    return float(info["format"]["duration"])
+
+
 _PROCESSED_ROOT = "./_persistent_cache"
 
 _THUMBNAIL_SPRITE_FNAME = "thumbnail_sprite.jpg"
@@ -16,6 +39,7 @@ _THUMBNAIL_WIDTH = 160
 _THUMBNAIL_HEIGHT = 90
 _SPRITE_COLS = 10
 
+_NUM_THUMBNAILS = 99
 _INTERVAL_SECS_KEY = "interval_secs"
 
 # This is for backwards compatibility. Earlier, the _THUMBNAIL_SECS used to be fixed.
@@ -51,6 +75,12 @@ class ProcessedMovie:
             return json.load(f)
 
     def _make_thumb_sprites(self) -> None:
+        # Show an error if the movie file does not exist.
+        if not os.path.exists(self._original_fname):
+            raise FileNotFoundError(
+                f"Movie file {self._original_fname} does not exist."
+            )
+
         # Make a randomly named dir under which thumbnails are stored.
         temp_dir = os.path.join(
             _PROCESSED_ROOT,
@@ -61,6 +91,10 @@ class ProcessedMovie:
         )
         os.makedirs(temp_dir, exist_ok=True)
 
+        # Determine video duration and optimal interval for 100 thumbnails.
+        duration_sec = _get_video_duration_sec(self._original_fname)
+        interval_sec = max(duration_sec // _NUM_THUMBNAILS, 1)  # Avoid interval < 1s
+
         # Make thumbnails.
         subprocess.check_call(
             [
@@ -69,7 +103,7 @@ class ProcessedMovie:
                 self._original_fname,
                 "-vf",
                 (
-                    f"fps=1/{_DEFAULT_INTERVAL_SECS},"
+                    f"fps=1/{interval_sec},"
                     f"scale={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}:force_original_aspect_ratio=decrease,"
                     f"pad={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}:(ow-iw)/2:(oh-ih)/2"
                 ),
@@ -92,10 +126,10 @@ class ProcessedMovie:
             ]
         )
 
-        # Write thumbnail_info.json with THUMBNAIL_SECS
+        # Write thumbnail_info.json with INTERVAL_SECS_KEY
         info_path = self._thumbnail_info_fname
         with open(info_path, "w") as f:
-            json.dump({_INTERVAL_SECS_KEY: _DEFAULT_INTERVAL_SECS}, f)
+            json.dump({_INTERVAL_SECS_KEY: interval_sec}, f)
 
         # Move it to the right location.
         os.rename(

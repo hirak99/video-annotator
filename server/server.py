@@ -1,4 +1,3 @@
-import argparse
 import functools
 import json
 import logging
@@ -18,8 +17,8 @@ import yaml
 from . import annotation_types
 from . import preprocess_movies
 
-# Can be overridden with -c option.
-_DEFAULT_CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
+# Note: Do not use a console argument, unless you also modify gunicorn.py.
+_CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
 
 # Deleted on exit.
 _TEMP_DIR = "_temp_cache"
@@ -230,7 +229,7 @@ def add_common_endpoints(
 
 
 class MainApp:
-    def __init__(self, config_file: str):
+    def __init__(self):
         self.app: flask.Flask = flask.Flask(__name__)
         # Enable CORS for frontend to communicate with the backend.
         flask_cors.CORS(self.app, supports_credentials=True)
@@ -239,10 +238,9 @@ class MainApp:
         self.socketio = flask_socketio.SocketIO(self.app, cors_allowed_origins="*")
 
         # Load video files from YAML.
-        logging.info("Loading configuration from " + config_file)
-        with open(config_file, "r") as f:
+        logging.info("Loading configuration from " + _CONFIG_FILE)
+        with open(_CONFIG_FILE, "r") as f:
             config = yaml.safe_load(f)
-            logging.info(config)
 
         label_types: list[_LabelProperties] = config["labels"]
         video_files: list[_VideoFile] = config["videos"]
@@ -303,6 +301,7 @@ class MainApp:
         @self.app.route("/api/thumbnail/<int:video_id>/info", methods=["GET"])
         @_login_required
         def get_thumbnail_info(video_id: int):
+            logging.info(processed_movie_data[video_id].thumbnail_info)
             return jsonify(processed_movie_data[video_id].thumbnail_info)
 
         # @self.app.before_request
@@ -333,6 +332,8 @@ class MainApp:
                     401,
                 )
 
+        logging.info("Server is ready.")
+
     def _repack_video(self, video_file: str) -> str:
         if video_file.endswith(".mp4"):
             return video_file
@@ -357,11 +358,7 @@ class MainApp:
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--config", type=str, default=_DEFAULT_CONFIG_FILE)
-    args = parser.parse_args()
-
-    main_app = MainApp(config_file=args.config)
+    main_app = MainApp()
     port = int(os.getenv("PORT", 8080))
     logging.info("Serving...")
     main_app.socketio.run(

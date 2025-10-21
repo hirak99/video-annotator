@@ -8,7 +8,8 @@ interface VideoSeekBarProps {
     currentTime: number; // current playback time in seconds
     onSeek: (time: number) => void; // callback when user seeks to a new time
     width: number; // width of the seek bar in pixels
-    thumbUrlPrefix: string;
+    thumbSpriteUrl: string;
+    thumbIntervalSecs: number | null;
     playerRef: React.RefObject<HTMLVideoElement | null>;
     onSeekEnd?: () => void; // called by parent after seek is complete
 }
@@ -18,7 +19,8 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
     currentTime,
     onSeek,
     width,
-    thumbUrlPrefix,
+    thumbSpriteUrl,
+    thumbIntervalSecs,
     playerRef,
 }) => {
     const [isDragging, setIsDragging] = useState(false);
@@ -148,7 +150,8 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
             {/* Thumbnail preview (show on hover or drag) */}
             {(isHovering && hoverTime !== null && hoverX !== null) && (
                 <ThumbnailPreview
-                    thumbUrlPrefix={thumbUrlPrefix}
+                    thumbSpriteUrl={thumbSpriteUrl}
+                    thumbIntervalSecs={thumbIntervalSecs}
                     playerRef={playerRef as React.RefObject<HTMLVideoElement>}
                     previewTime={hoverTime}
                     thumbX={Math.max(
@@ -162,7 +165,8 @@ const VideoSeekBar: React.FC<VideoSeekBarProps> = ({
             )}
             {isDragging && dragTime !== null && (
                 <ThumbnailPreview
-                    thumbUrlPrefix={thumbUrlPrefix}
+                    thumbSpriteUrl={thumbSpriteUrl}
+                    thumbIntervalSecs={thumbIntervalSecs}
                     playerRef={playerRef as React.RefObject<HTMLVideoElement>}
                     previewTime={dragTime}
                     thumbX={Math.max(

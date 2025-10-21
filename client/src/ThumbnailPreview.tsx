@@ -1,28 +1,27 @@
-import React from 'react';
-
 const THUMBNAIL_WIDTH = 160; // Must match server
 const THUMBNAIL_HEIGHT = 90; // Must match server
 const SPRITE_COLS = 10; // Must match montage -tile 10x
-const THUMBNAIL_SECS = 10; // Must match server
-
 interface ThumbnailPreviewProps {
-    thumbUrlPrefix: string;
+    thumbSpriteUrl: string;
+    thumbIntervalSecs: number | null;
     playerRef: React.RefObject<HTMLVideoElement>;
     previewTime: number;
     thumbX: number;
 }
 
 const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
-    thumbUrlPrefix,
+    thumbSpriteUrl,
+    thumbIntervalSecs,
     playerRef,
     previewTime,
     thumbX,
 }) => {
     if (
-        !thumbUrlPrefix ||
+        !thumbSpriteUrl ||
         !playerRef.current ||
         playerRef.current.duration <= 0 ||
-        isNaN(previewTime) // Can happen right after load
+        isNaN(previewTime) || // Can happen right after load
+        thumbIntervalSecs === null
     ) {
         return null;
     }
@@ -41,13 +40,13 @@ const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
     // Note that ffmpeg samples from the middle.
     // E.g. for 1/10 fps, it picks frames at 5s, 15s, 25s etc.
     // So we use idx=0 for [0, 5). Then onwards idx=0 for [5, 15), idx=1 for [15, 25) and so on.
-    const adjustedTime = previewTime - THUMBNAIL_SECS / 2;
-    const idx = Math.max(0, Math.floor(adjustedTime / THUMBNAIL_SECS));
+    const adjustedTime = previewTime - thumbIntervalSecs / 2;
+    const idx = Math.max(0, Math.floor(adjustedTime / thumbIntervalSecs));
     const col = idx % SPRITE_COLS;
     const row = Math.floor(idx / SPRITE_COLS);
 
     const durationForThumbs = playerRef.current.duration;
-    const totalThumbs = Math.ceil(durationForThumbs / THUMBNAIL_SECS);
+    const totalThumbs = Math.floor(durationForThumbs / thumbIntervalSecs + 0.5);
     const rows = Math.ceil(totalThumbs / SPRITE_COLS);
 
     return (
@@ -58,7 +57,7 @@ const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
                 bottom: 36, // Show above the timeline overlay
                 width: THUMBNAIL_WIDTH,
                 height: THUMBNAIL_HEIGHT,
-                backgroundImage: `url(${thumbUrlPrefix}/sprite)`,
+                backgroundImage: `url(${thumbSpriteUrl})`,
                 backgroundRepeat: 'no-repeat',
                 backgroundColor: '#222',
                 border: '1px solid #888',
