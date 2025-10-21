@@ -52,6 +52,17 @@ const VideoSelect: React.FC<VideoSelectProps> = ({ videoFiles, currentVideoIdx, 
         }),
     };
 
+    // Custom filter function for multi-word search
+    const filterOption = (option: any, inputValue: string) => {
+        if (!inputValue) return true;
+        const words = inputValue
+            .toLowerCase()
+            .split(' ')
+            .filter(Boolean);
+        const label = option.data.label.toLowerCase();
+        return words.every(word => label.includes(word));
+    };
+
     return (
         <Select
             value={selectedOption}
@@ -60,6 +71,7 @@ const VideoSelect: React.FC<VideoSelectProps> = ({ videoFiles, currentVideoIdx, 
             isSearchable={true}
             placeholder="Select a video..."
             styles={customStyles}
+            filterOption={filterOption}
         />
     );
 };
