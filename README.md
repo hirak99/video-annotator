@@ -69,7 +69,9 @@ pip install flask flask_cors flask_socketio gunicorn pydantic
 
 Configure [configuration_example.yaml](./configuration_example.yaml).
 
-You may also create a new configuration file, and pass it using the `ANNOTATION_CONFIG_FILE` environment variable.
+You can override the config file location, in order of precedence, with -
+1. the "-c" option to specify it, or
+2. the "ANNOTATION_CONFIG_FILE" environment variable.
 
 ## Serving
 

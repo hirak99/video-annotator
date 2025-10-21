@@ -4,6 +4,7 @@ import random
 import shutil
 import string
 import subprocess
+import json
 
 _PROCESSED_ROOT = "./_persistent_cache"
 
@@ -14,7 +15,12 @@ _THUMBNAIL_SPRITE_FNAME = "thumbnail_sprite.jpg"
 _THUMBNAIL_WIDTH = 160
 _THUMBNAIL_HEIGHT = 90
 _SPRITE_COLS = 10
-_THUMBNAIL_SECS = 10
+
+_INTERVAL_SECS_KEY = "interval_secs"
+
+# This is for backwards compatibility. Earlier, the _THUMBNAIL_SECS used to be fixed.
+# This is the default assumed, for files without info.
+_DEFAULT_INTERVAL_SECS = 10
 
 
 # Creates movie sprites (and may be later process the movie for better streaming as well).
@@ -32,6 +38,17 @@ class ProcessedMovie:
     @property
     def thumbnail_sprite_fname(self) -> str:
         return os.path.join(self._processed_dir, _THUMBNAIL_SPRITE_FNAME)
+
+    @property
+    def _thumbnail_info_fname(self) -> str:
+        return os.path.join(self._processed_dir, "thumbnail_info.json")
+
+    @property
+    def thumbnail_info(self) -> dict[str, int | str]:
+        if not os.path.exists(self._thumbnail_info_fname):
+            return {_INTERVAL_SECS_KEY: _DEFAULT_INTERVAL_SECS}
+        with open(self._thumbnail_info_fname, "r") as f:
+            return json.load(f)
 
     def _make_thumb_sprites(self) -> None:
         # Make a randomly named dir under which thumbnails are stored.
@@ -52,7 +69,7 @@ class ProcessedMovie:
                 self._original_fname,
                 "-vf",
                 (
-                    f"fps=1/{_THUMBNAIL_SECS},"
+                    f"fps=1/{_DEFAULT_INTERVAL_SECS},"
                     f"scale={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}:force_original_aspect_ratio=decrease,"
                     f"pad={_THUMBNAIL_WIDTH}:{_THUMBNAIL_HEIGHT}:(ow-iw)/2:(oh-ih)/2"
                 ),
@@ -74,6 +91,11 @@ class ProcessedMovie:
                 f"{temp_dir}/{_THUMBNAIL_SPRITE_FNAME}",
             ]
         )
+
+        # Write thumbnail_info.json with THUMBNAIL_SECS
+        info_path = self._thumbnail_info_fname
+        with open(info_path, "w") as f:
+            json.dump({_INTERVAL_SECS_KEY: _DEFAULT_INTERVAL_SECS}, f)
 
         # Move it to the right location.
         os.rename(

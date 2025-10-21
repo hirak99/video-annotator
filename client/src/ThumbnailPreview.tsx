@@ -6,20 +6,20 @@ const SPRITE_COLS = 10; // Must match montage -tile 10x
 const THUMBNAIL_SECS = 10; // Must match server
 
 interface ThumbnailPreviewProps {
-    thumbSpriteUrl: string;
+    thumbUrlPrefix: string;
     playerRef: React.RefObject<HTMLVideoElement>;
     previewTime: number;
     thumbX: number;
 }
 
 const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
-    thumbSpriteUrl,
+    thumbUrlPrefix,
     playerRef,
     previewTime,
     thumbX,
 }) => {
     if (
-        !thumbSpriteUrl ||
+        !thumbUrlPrefix ||
         !playerRef.current ||
         playerRef.current.duration <= 0 ||
         isNaN(previewTime) // Can happen right after load
@@ -58,7 +58,7 @@ const ThumbnailPreview: React.FC<ThumbnailPreviewProps> = ({
                 bottom: 36, // Show above the timeline overlay
                 width: THUMBNAIL_WIDTH,
                 height: THUMBNAIL_HEIGHT,
-                backgroundImage: `url(${thumbSpriteUrl})`,
+                backgroundImage: `url(${thumbUrlPrefix}/sprite)`,
                 backgroundRepeat: 'no-repeat',
                 backgroundColor: '#222',
                 border: '1px solid #888',

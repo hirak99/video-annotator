@@ -46,12 +46,12 @@ const VideoPlayer: React.FC = () => {
     const [currentTime, setCurrentTime] = useState<number>(0);
 
     // Thumbnail sprite URL fetched from server
-    const [thumbSpriteUrl, setThumbSpriteUrl] = useState<string>("");
+    const [thumbUrlPrefix, setThumbUrlPrefix] = useState<string>("");
 
     useEffect(() => {
         if (!BACKEND_URL) return;
-        // Sprite is now served directly as image/jpeg
-        setThumbSpriteUrl(`${BACKEND_URL}/api/thumbnail-sprite/${currentVideoIdx}`);
+        // Server serves further suffixes, such as .../info and .../sprite.
+        setThumbUrlPrefix(`${BACKEND_URL}/api/thumbnail/${currentVideoIdx}`);
     }, [currentVideoIdx]);
 
     const [videoDimensions, setVideoDimensions] = useState({
@@ -431,7 +431,7 @@ const VideoPlayer: React.FC = () => {
                             }
                         }}
                         width={videoDimensions.displayWidth}
-                        thumbSpriteUrl={thumbSpriteUrl}
+                        thumbUrlPrefix={thumbUrlPrefix}
                         playerRef={playerRef}
                     />
 
