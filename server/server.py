@@ -11,7 +11,7 @@ import yaml
 from . import common_types
 from . import data_endpoints
 from . import preprocess_movies
-from . import video_endpoints
+from . import streaming_endpoints
 
 # Note: Do not use a console argument, unless you also modify gunicorn.py.
 _CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
@@ -77,7 +77,7 @@ class MainApp:
         )
 
         # Video streaming.
-        video_endpoints.VideoStreamer().add_video_endpoints(
+        streaming_endpoints.VideoStreamer().add_video_endpoints(
             video_files=video_files,
             app=self.app,
         )
