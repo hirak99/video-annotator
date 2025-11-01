@@ -24,8 +24,11 @@ def _repack_video(video_file: str) -> str:
     if video_file.endswith(".mp4"):
         return video_file
 
+    os.makedirs(_TEMP_DIR, exist_ok=True)
+
     temp_mp4 = os.path.join(_TEMP_DIR, os.path.basename(video_file) + ".repacked.mp4")
     if not os.path.exists(temp_mp4):  # Avoid repacking if already done
+        logging.info(f"Repacking {video_file} to {temp_mp4}")
         subprocess.run(
             [
                 "ffmpeg",
