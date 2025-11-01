@@ -18,15 +18,19 @@ _TEMP_DIR = "_temp_cache"
 # pyright: reportUnusedFunction=false
 
 
-def _repack_to_mp4(mkv_file: str) -> str:
-    temp_mp4 = os.path.join(_TEMP_DIR, os.path.basename(mkv_file) + ".mp4")
+def _repack_video(video_file: str) -> str:
+    # No need to repack .mp4, they are natively supported on browsers.
+    if video_file.endswith(".mp4"):
+        return video_file
+
+    temp_mp4 = os.path.join(_TEMP_DIR, os.path.basename(video_file) + ".repacked.mp4")
     if not os.path.exists(temp_mp4):  # Avoid repacking if already done
         subprocess.run(
             [
                 "ffmpeg",
                 "-y",
                 "-i",
-                mkv_file,
+                video_file,
                 "-c",
                 "copy",
                 "-movflags",
@@ -74,11 +78,10 @@ def _stream_video(video_path: str, request: flask.Request):
 
 
 class VideoStreamer:
-    def __init__(self, app: flask.Flask):
-        self.app = app
 
     def add_video_endpoints(
         self,
+        app: flask.Flask,
         video_files: list[common_types.VideoFile],
     ):
         # Preprocess thumbnails etc.
@@ -88,10 +91,7 @@ class VideoStreamer:
                 preprocess_movies.ProcessedMovie(video_file["video_file"])
             )
 
-        self._repacked_original_fname: str = ""
-        self._repacked_fname: str = ""
-
-        @self.app.route("/api/video/<int:video_id>", methods=["GET"])
+        @app.route("/api/video/<int:video_id>", methods=["GET"])
         @common.login_required
         def stream_video(video_id):
             video = video_files[video_id]
@@ -106,9 +106,9 @@ class VideoStreamer:
                     404,
                 )
             video_file = video["video_file"]
-            return _stream_video(self._repack_video(video_file), request=request)
+            return _stream_video(_repack_video(video_file), request=request)
 
-        @self.app.route("/api/thumbnail/<int:video_id>/sprite", methods=["GET"])
+        @app.route("/api/thumbnail/<int:video_id>/sprite", methods=["GET"])
         @common.login_required
         def get_thumbnail_sprite(video_id: int):
             # Serve the thumbnail sprite binary data with correct MIME type
@@ -127,19 +127,11 @@ class VideoStreamer:
                 data = f.read()
             return flask.Response(data, mimetype="image/jpeg")
 
-        @self.app.route("/api/thumbnail/<int:video_id>/info", methods=["GET"])
+        @app.route("/api/thumbnail/<int:video_id>/info", methods=["GET"])
         @common.login_required
         def get_thumbnail_info(video_id: int):
             logging.info(processed_movie_data[video_id].thumbnail_info)
             return jsonify(processed_movie_data[video_id].thumbnail_info)
-
-    def _repack_video(self, video_file: str) -> str:
-        if video_file.endswith(".mp4"):
-            return video_file
-
-        if not os.path.exists(_TEMP_DIR):
-            os.makedirs(_TEMP_DIR)
-        return _repack_to_mp4(video_file)
 
     def __del__(self):
         """Remove temporary files after request."""

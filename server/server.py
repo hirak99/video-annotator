@@ -68,6 +68,7 @@ class MainApp:
                     401,
                 )
 
+        # Label getting and setting, list videos.
         data_endpoints.add_common_endpoints(
             self.app,
             video_files=video_files,
@@ -75,8 +76,10 @@ class MainApp:
             socketio=self.socketio,
         )
 
-        video_endpoints.VideoStreamer(self.app).add_video_endpoints(
+        # Video streaming.
+        video_endpoints.VideoStreamer().add_video_endpoints(
             video_files=video_files,
+            app=self.app,
         )
 
         logging.info("Server is ready.")
