@@ -1,6 +1,7 @@
 import logging
 import os
 import subprocess
+from typing import Callable
 
 import flask
 from flask import jsonify
@@ -82,19 +83,24 @@ class VideoStreamer:
     def add_video_endpoints(
         self,
         app: flask.Flask,
-        video_files: list[common_types.VideoFile],
+        current_user_videos_fn: Callable[[], list[common_types.VideoFileInternal]],
     ):
-        # Preprocess thumbnails etc.
-        processed_movie_data: list[preprocess_movies.ProcessedMovie] = []
-        for video_file in video_files:
-            processed_movie_data.append(
-                preprocess_movies.ProcessedMovie(video_file["video_file"])
+        # # Preprocess thumbnails etc.
+        # processed_movie_data: list[preprocess_movies.ProcessedMovie] = []
+        # for video_file in videos_for_current_user():
+        #     processed_movie_data.append(
+        #         preprocess_movies.ProcessedMovie(video_file["video_file"])
+        #     )
+
+        def _thumbnail_data(video_id: int) -> preprocess_movies.ProcessedMovie:
+            return preprocess_movies.ProcessedMovie(
+                current_user_videos_fn()[video_id]["video_file"]
             )
 
         @app.route("/api/video/<int:video_id>", methods=["GET"])
         @common.login_required
         def stream_video(video_id):
-            video = video_files[video_id]
+            video = current_user_videos_fn()[video_id]
             if not video:
                 return (
                     jsonify(
@@ -112,7 +118,7 @@ class VideoStreamer:
         @common.login_required
         def get_thumbnail_sprite(video_id: int):
             # Serve the thumbnail sprite binary data with correct MIME type
-            sprite_fname = processed_movie_data[video_id].thumbnail_sprite_fname
+            sprite_fname = _thumbnail_data(video_id).thumbnail_sprite_fname
             if not os.path.exists(sprite_fname):
                 return (
                     jsonify(
@@ -130,8 +136,7 @@ class VideoStreamer:
         @app.route("/api/thumbnail/<int:video_id>/info", methods=["GET"])
         @common.login_required
         def get_thumbnail_info(video_id: int):
-            logging.info(processed_movie_data[video_id].thumbnail_info)
-            return jsonify(processed_movie_data[video_id].thumbnail_info)
+            return jsonify(_thumbnail_data(video_id).thumbnail_info)
 
     def __del__(self):
         """Remove temporary files after request."""

@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import typing
+from typing import Callable
 
 import flask
 from flask import jsonify
@@ -19,11 +20,12 @@ from . import common_types
 
 def add_common_endpoints(
     app: flask.Flask,
-    video_files: list[common_types.VideoFile],
+    current_user_videos_fn: Callable[[], list[common_types.VideoFileInternal]],
     label_types: list[common_types.LabelProperties],
     socketio: flask_socketio.SocketIO,
 ):
     def _load_labels_all_users(video_id: int) -> annotation_types.UserAnnotations:
+        video_files = current_user_videos_fn()
         labels_file = video_files[video_id]["label_file"]
         if os.path.exists(labels_file):
             with open(labels_file, "r") as f:
@@ -32,10 +34,8 @@ def add_common_endpoints(
 
     # Simple function to get labels from a JSON file
     def _load_labels(video_id: int) -> list[annotation_types.AnnotationProps]:
-        user = flask.session.get("username")
-        assert user is not None
         all_users = _load_labels_all_users(video_id)
-        return all_users.by_user.get(user, [])
+        return all_users.by_user.get(common.current_user(), [])
 
     # Simple function to save labels to a JSON file
     def _save_labels(
@@ -51,14 +51,13 @@ def add_common_endpoints(
                 d["label"] = label.label.model_dump_rounded()
             return d
 
-        user = flask.session.get("username")
-        assert user is not None
-        all_users.by_user[user] = [
+        all_users.by_user[common.current_user()] = [
             annotation_types.AnnotationProps.model_validate(x) for x in labels
         ]
 
         json.dumps([dump_label(label) for label in labels])
 
+        video_files = current_user_videos_fn()
         labels_file = video_files[video_id]["label_file"]
         with open(labels_file, "w") as f:
             json.dump(all_users.model_dump(), f, indent=2)
@@ -79,8 +78,9 @@ def add_common_endpoints(
     @app.route("/api/video-files", methods=["GET"])
     @common.login_required
     def get_video_files():
+        video_files = current_user_videos_fn()
         # Return video files without the path.
-        file_desc: list[common_types.VideoFile] = []
+        file_desc: list[common_types.VideoFileForProps] = []
         for video_id, video in enumerate(video_files):
             file_desc.append(video.copy())
 

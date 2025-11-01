@@ -13,3 +13,7 @@ def login_required(f):
     return decorated_function
 
 
+def current_user() -> str:
+    user = flask.session.get("username")
+    assert user is not None
+    return user

@@ -8,6 +8,7 @@ import flask_cors
 import flask_socketio
 import yaml
 
+from . import common
 from . import common_types
 from . import data_endpoints
 from . import preprocess_movies
@@ -35,14 +36,11 @@ class MainApp:
             config = yaml.safe_load(f)
 
         label_types: list[common_types.LabelProperties] = config["labels"]
-        video_files: list[common_types.VideoFile] = config["videos"]
+        video_files: list[common_types.VideoFileInternal] = config["videos"]
 
         # Preprocess thumbnails etc.
-        processed_movie_data: list[preprocess_movies.ProcessedMovie] = []
         for video_file in video_files:
-            processed_movie_data.append(
-                preprocess_movies.ProcessedMovie(video_file["video_file"])
-            )
+            preprocess_movies.ProcessedMovie(video_file["video_file"])
 
         @self.app.route("/logout", methods=["POST"])
         def logout():
@@ -68,17 +66,26 @@ class MainApp:
                     401,
                 )
 
+        # Filters video files to include only videos visible by the current user.
+        # A function, since current_user() is only accessible inside a session.
+        def get_current_user_videos() -> list[common_types.VideoFileInternal]:
+            return [
+                video_file
+                for video_file in video_files
+                if "acl" not in video_file or common.current_user() in video_file["acl"]
+            ]
+
         # Label getting and setting, list videos.
         data_endpoints.add_common_endpoints(
             self.app,
-            video_files=video_files,
+            current_user_videos_fn=get_current_user_videos,
             label_types=label_types,
             socketio=self.socketio,
         )
 
         # Video streaming.
         streaming_endpoints.VideoStreamer().add_video_endpoints(
-            video_files=video_files,
+            current_user_videos_fn=get_current_user_videos,
             app=self.app,
         )
 

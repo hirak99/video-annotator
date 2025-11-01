@@ -19,7 +19,9 @@ labels:
 videos:
   - video_file: "video.mkv"
     label_file: "labels.json"
-  # Optional. If present, used in the UI instead of video file's basename.
+    # Optional. If present, used in the UI instead of video file's basename.
     video_alias: "Video 1"
+    # Optional. If present, only these users will be able to see the video.
+    acl: ["bravo"]
   - video_file: "video2.mkv"
     label_file: "labels2.json"
