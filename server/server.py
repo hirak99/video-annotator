@@ -110,9 +110,6 @@ def _login_required(f):
     def decorated_function(*args, **kwargs):
         if "username" not in flask.session:  # Check if the user is logged in
             return {"needs_login": True}
-            return flask.redirect(
-                flask.url_for("login")
-            )  # Redirect to login page if not logged in
         return f(*args, **kwargs)
 
     return decorated_function
