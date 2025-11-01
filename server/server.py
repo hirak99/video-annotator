@@ -1,20 +1,17 @@
-import functools
-import json
 import logging
 import os
 import subprocess
-import typing
-from typing import NotRequired, TypedDict
 
 import flask
 from flask import jsonify
 from flask import request
 import flask_cors
 import flask_socketio
-import pydantic
 import yaml
 
-from . import annotation_types
+from . import common
+from . import common_types
+from . import data_endpoints
 from . import preprocess_movies
 
 # Note: Do not use a console argument, unless you also modify gunicorn.py.
@@ -22,28 +19,6 @@ _CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
 
 # Deleted on exit.
 _TEMP_DIR = "_temp_cache"
-
-
-class _User(TypedDict):
-    username: str
-    password: str
-
-
-class _LabelProperties(TypedDict):
-    name: str
-    allow_multiple: bool
-    color: str
-
-
-class _VideoFile(TypedDict):
-    # The path to the video to used.
-    video_file: str
-    # If specified, this alias will be shown instead of file name in the UI.
-    video_alias: NotRequired[str]
-    # Where the label will be stored.
-    label_file: str
-    # This need not be declared, will be loaded from the .json file +r attribute.
-    readonly: bool
 
 
 # Unused functions for flask endpoints.
@@ -105,126 +80,6 @@ def _stream_video(video_path: str, request: flask.Request):
     return flask.Response(data, mimetype="video/mp4")
 
 
-def _login_required(f):
-    @functools.wraps(f)
-    def decorated_function(*args, **kwargs):
-        if "username" not in flask.session:  # Check if the user is logged in
-            return {"needs_login": True}
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
-def add_common_endpoints(
-    app: flask.Flask,
-    video_files: list[_VideoFile],
-    label_types: list[_LabelProperties],
-    socketio: flask_socketio.SocketIO,
-):
-    def _load_labels_all_users(video_id: int) -> annotation_types.UserAnnotations:
-        labels_file = video_files[video_id]["label_file"]
-        if os.path.exists(labels_file):
-            with open(labels_file, "r") as f:
-                return annotation_types.UserAnnotations.model_validate_json(f.read())
-        return annotation_types.UserAnnotations(by_user={})
-
-    # Simple function to get labels from a JSON file
-    def _load_labels(video_id: int) -> list[annotation_types.AnnotationProps]:
-        user = flask.session.get("username")
-        assert user is not None
-        all_users = _load_labels_all_users(video_id)
-        return all_users.by_user.get(user, [])
-
-    # Simple function to save labels to a JSON file
-    def _save_labels(
-        video_id: int, labels: list[annotation_types.AnnotationProps], client_id: str
-    ):
-        all_users = _load_labels_all_users(video_id)
-
-        def dump_label(label):
-            d = label.model_dump()
-            if hasattr(label, "label") and isinstance(
-                label.label, annotation_types.BoxLabel
-            ):
-                d["label"] = label.label.model_dump_rounded()
-            return d
-
-        user = flask.session.get("username")
-        assert user is not None
-        all_users.by_user[user] = [
-            annotation_types.AnnotationProps.model_validate(x) for x in labels
-        ]
-
-        json.dumps([dump_label(label) for label in labels])
-
-        labels_file = video_files[video_id]["label_file"]
-        with open(labels_file, "w") as f:
-            json.dump(all_users.model_dump(), f, indent=2)
-
-        # Emit a SocketIO event to notify all clients, including the client_id if provided
-        try:
-            payload = {"video_id": video_id, "client_id": client_id}
-            socketio.emit("labels_updated", payload)
-        except Exception as e:
-            logging.warning("SocketIO emit failed:", e)
-
-    @app.route("/api/labels/<int:video_id>", methods=["GET"])
-    @_login_required
-    def get_labels(video_id):
-        labels = _load_labels(video_id)
-        return jsonify([label.model_dump() for label in labels])
-
-    @app.route("/api/video-files", methods=["GET"])
-    @_login_required
-    def get_video_files():
-        # Return video files without the path.
-        file_desc: list[_VideoFile] = []
-        for video_id, video in enumerate(video_files):
-            file_desc.append(video.copy())
-
-            if "video_alias" in video:
-                file_desc[-1]["video_file"] = video["video_alias"]
-            else:
-                file_desc[-1]["video_file"] = os.path.basename(video["video_file"])
-
-            # Check if the label_file exists and is readonly.
-            readonly = os.path.exists(video["label_file"]) and not os.access(
-                video["label_file"], os.W_OK
-            )
-            file_desc[-1]["readonly"] = readonly
-
-            try:
-                label_count = len(_load_labels(video_id))
-                if label_count > 0:
-                    file_desc[-1][
-                        "video_file"
-                    ] += f" ({label_count} label{'s' if label_count > 1 else ''} at last refresh)"
-            except pydantic.ValidationError:
-                file_desc[-1]["video_file"] += " (error loading labels)"
-        return jsonify(file_desc)
-
-    @app.route("/api/label-types", methods=["GET"])
-    def get_label_types():
-        return jsonify(label_types)
-
-    @app.route("/api/set-labels/<int:video_id>", methods=["POST"])
-    @_login_required
-    def set_labels(video_id: int):
-        # Expect request.json to be a dict with keys: "labels" (list) and "client_id" (str)
-        data = request.json
-        labels_data = data.get("labels", [])  # type: ignore
-        client_id = data.get("client_id", "")  # type: ignore
-        labels = [
-            annotation_types.AnnotationProps.model_validate(label)
-            for label in typing.cast(list[dict[str, str]], labels_data)
-        ]
-
-        _save_labels(video_id, labels, client_id=client_id)
-        return jsonify(
-            {"status": "success", "labels": [label.model_dump() for label in labels]}
-        )
-
-
 class MainApp:
     def __init__(self):
         self.app: flask.Flask = flask.Flask(__name__)
@@ -239,8 +94,8 @@ class MainApp:
         with open(_CONFIG_FILE, "r") as f:
             config = yaml.safe_load(f)
 
-        label_types: list[_LabelProperties] = config["labels"]
-        video_files: list[_VideoFile] = config["videos"]
+        label_types: list[common_types.LabelProperties] = config["labels"]
+        video_files: list[common_types.VideoFile] = config["videos"]
 
         # Preprocess thumbnails etc.
         processed_movie_data: list[preprocess_movies.ProcessedMovie] = []
@@ -249,7 +104,7 @@ class MainApp:
                 preprocess_movies.ProcessedMovie(video_file["video_file"])
             )
 
-        add_common_endpoints(
+        data_endpoints.add_common_endpoints(
             self.app,
             video_files=video_files,
             label_types=label_types,
@@ -260,7 +115,7 @@ class MainApp:
         self._repacked_fname: str = ""
 
         @self.app.route("/api/video/<int:video_id>", methods=["GET"])
-        @_login_required
+        @common.login_required
         def stream_video(video_id):
             video = video_files[video_id]
             if not video:
@@ -277,7 +132,7 @@ class MainApp:
             return _stream_video(self._repack_video(video_file), request=request)
 
         @self.app.route("/api/thumbnail/<int:video_id>/sprite", methods=["GET"])
-        @_login_required
+        @common.login_required
         def get_thumbnail_sprite(video_id: int):
             # Serve the thumbnail sprite binary data with correct MIME type
             sprite_fname = processed_movie_data[video_id].thumbnail_sprite_fname
@@ -296,7 +151,7 @@ class MainApp:
             return flask.Response(data, mimetype="image/jpeg")
 
         @self.app.route("/api/thumbnail/<int:video_id>/info", methods=["GET"])
-        @_login_required
+        @common.login_required
         def get_thumbnail_info(video_id: int):
             logging.info(processed_movie_data[video_id].thumbnail_info)
             return jsonify(processed_movie_data[video_id].thumbnail_info)
@@ -315,7 +170,7 @@ class MainApp:
         def login():
             username = request.json.get("username")  # type: ignore
             password = request.json.get("password")  # type: ignore
-            users: list[_User] = config["users"]
+            users: list[common_types.User] = config["users"]
             logging.info(flask.session)
             flask.session.clear()
             for user in users:
