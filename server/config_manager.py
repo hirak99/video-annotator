@@ -2,6 +2,7 @@ import functools
 import os
 import threading
 
+import filelock
 import yaml
 
 from . import common
@@ -10,6 +11,9 @@ from . import preprocess_movies
 
 # Note: Do not use a console argument, unless you also modify gunicorn.py.
 _CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
+
+# Ensure this lock is used while writing to the config when the server is running.
+_CONFIG_FILE_LOCK = _CONFIG_FILE + ".lock"
 
 
 class _Config:
@@ -20,8 +24,9 @@ class _Config:
             self.reload()
 
     def reload(self):
-        with open(_CONFIG_FILE, "r") as f:
-            self._config: common_types.Config = yaml.safe_load(f)
+        with filelock.FileLock(_CONFIG_FILE_LOCK):
+            with open(_CONFIG_FILE, "r") as f:
+                self._config: common_types.Config = yaml.safe_load(f)
         # Preprocess thumbnails etc.
         for video_file in self.get_video_files():
             preprocess_movies.ProcessedMovie(video_file["video_file"])
