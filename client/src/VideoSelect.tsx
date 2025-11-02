@@ -9,11 +9,11 @@ interface VideoFileProps {
 
 interface VideoSelectProps {
     videoFiles: VideoFileProps[];
-    currentVideoIdx: number;
-    setCurrentVideoIdx: React.Dispatch<React.SetStateAction<number>>;
+    currentVideoIndex: number;
+    setCurrentVideoIndex: React.Dispatch<React.SetStateAction<number>>;
 }
 
-const VideoSelect: React.FC<VideoSelectProps> = ({ videoFiles, currentVideoIdx, setCurrentVideoIdx }) => {
+const VideoSelect: React.FC<VideoSelectProps> = ({ videoFiles, currentVideoIndex: currentVideoIdx, setCurrentVideoIndex: setCurrentVideoIdx }) => {
     const options = videoFiles.map((file, index) => ({
         value: index,
         label: file.video_file

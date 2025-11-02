@@ -94,23 +94,23 @@ class VideoStreamer:
         #     )
 
         def _thumbnail_data(
-            config: config_manager.Config, video_id: int
+            config: config_manager.Config, video_uid: str
         ) -> preprocess_movies.ProcessedMovie:
             return preprocess_movies.ProcessedMovie(
-                config.get_current_user_videos()[video_id]["video_file"]
+                config.get_current_user_videos()[video_uid]["video_file"]
             )
 
-        @app.route("/api/video/<int:video_id>", methods=["GET"])
+        @app.route("/api/video/<string:video_uid>", methods=["GET"])
         @common.login_required
         @config_manager.with_config
-        def stream_video(config: config_manager.Config, video_id: int):
-            video = config.get_current_user_videos()[video_id]
+        def stream_video(config: config_manager.Config, video_uid: str):
+            video = config.get_current_user_videos()[video_uid]
             if not video:
                 return (
                     jsonify(
                         {
                             "status": "error",
-                            "message": f"Video with id {video_id} not found",
+                            "message": f"Video with {video_uid=} not found",
                         }
                     ),
                     404,
@@ -118,18 +118,18 @@ class VideoStreamer:
             video_file = video["video_file"]
             return _stream_video(_repack_video(video_file), request=request)
 
-        @app.route("/api/thumbnail/<int:video_id>/sprite", methods=["GET"])
+        @app.route("/api/thumbnail/<string:video_uid>/sprite", methods=["GET"])
         @common.login_required
         @config_manager.with_config
-        def get_thumbnail_sprite(config: config_manager.Config, video_id: int):
+        def get_thumbnail_sprite(config: config_manager.Config, video_uid: str):
             # Serve the thumbnail sprite binary data with correct MIME type
-            sprite_fname = _thumbnail_data(config, video_id).thumbnail_sprite_fname
+            sprite_fname = _thumbnail_data(config, video_uid).thumbnail_sprite_fname
             if not os.path.exists(sprite_fname):
                 return (
                     jsonify(
                         {
                             "status": "error",
-                            "message": f"Thumbnail sprite not found for video {video_id}",
+                            "message": f"Thumbnail sprite not found for {video_uid=}",
                         }
                     ),
                     404,
@@ -138,11 +138,11 @@ class VideoStreamer:
                 data = f.read()
             return flask.Response(data, mimetype="image/jpeg")
 
-        @app.route("/api/thumbnail/<int:video_id>/info", methods=["GET"])
+        @app.route("/api/thumbnail/<string:video_uid>/info", methods=["GET"])
         @common.login_required
         @config_manager.with_config
-        def get_thumbnail_info(config: config_manager.Config, video_id: int):
-            return jsonify(_thumbnail_data(config, video_id).thumbnail_info)
+        def get_thumbnail_info(config: config_manager.Config, video_uid: str):
+            return jsonify(_thumbnail_data(config, video_uid).thumbnail_info)
 
     def __del__(self):
         """Remove temporary files after request."""

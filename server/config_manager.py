@@ -1,7 +1,7 @@
 import functools
+import hashlib
 import logging
 import os
-import threading
 from typing import Callable, TypeVar
 
 import filelock
@@ -29,10 +29,8 @@ class _PrivateClass:
 class Config:
     def __init__(self, _prevent_external_construction: _PrivateClass) -> None:
         logging.info("Initializing config ...")
-        self._config_lock = threading.Lock()
         self._config: common_types.ConfigType
-        with self._config_lock:
-            self._reload()
+        self._reload()
 
     def _reload(self):
         with filelock.FileLock(_CONFIG_FILE_LOCK):
@@ -40,6 +38,9 @@ class Config:
                 self._config: common_types.ConfigType = yaml.safe_load(f)
         # Preprocess thumbnails etc.
         for video_file in self._config["videos"]:
+            video_file["uid"] = hashlib.sha256(
+                video_file["video_file"].encode("utf-8")
+            ).hexdigest()[:16]
             preprocess_movies.ProcessedMovie(video_file["video_file"])
 
     def get_label_types(self) -> list[common_types.LabelProperties]:
@@ -49,13 +50,12 @@ class Config:
         return self._config["users"]
 
     # This must only be called within a flask session.
-    def get_current_user_videos(self) -> list[common_types.VideoFileInternal]:
-        with self._config_lock:
-            return [
-                video_file
-                for video_file in self._config["videos"]
-                if "acl" not in video_file or common.current_user() in video_file["acl"]
-            ]
+    def get_current_user_videos(self) -> dict[str, common_types.VideoFileInternal]:
+        return {
+            video_file["uid"]: video_file
+            for video_file in self._config["videos"]
+            if "acl" not in video_file or common.current_user() in video_file["acl"]
+        }
 
 
 def reload_config():

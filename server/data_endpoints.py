@@ -23,10 +23,10 @@ def add_common_endpoints(
     socketio: flask_socketio.SocketIO,
 ):
     def _load_labels_all_users(
-        config: config_manager.Config, video_id: int
+        config: config_manager.Config, video_uid: str
     ) -> annotation_types.UserAnnotations:
         video_files = config.get_current_user_videos()
-        labels_file = video_files[video_id]["label_file"]
+        labels_file = video_files[video_uid]["label_file"]
         if os.path.exists(labels_file):
             with open(labels_file, "r") as f:
                 return annotation_types.UserAnnotations.model_validate_json(f.read())
@@ -34,19 +34,19 @@ def add_common_endpoints(
 
     # Simple function to get labels from a JSON file
     def _load_labels(
-        config: config_manager.Config, video_id: int
+        config: config_manager.Config, video_uid: str
     ) -> list[annotation_types.AnnotationProps]:
-        all_users = _load_labels_all_users(config, video_id)
+        all_users = _load_labels_all_users(config, video_uid)
         return all_users.by_user.get(common.current_user(), [])
 
     # Simple function to save labels to a JSON file
     def _save_labels(
         config: config_manager.Config,
-        video_id: int,
+        video_uid: str,
         labels: list[annotation_types.AnnotationProps],
         client_id: str,
     ):
-        all_users = _load_labels_all_users(config, video_id)
+        all_users = _load_labels_all_users(config, video_uid)
 
         def dump_label(label):
             d = label.model_dump()
@@ -63,22 +63,22 @@ def add_common_endpoints(
         json.dumps([dump_label(label) for label in labels])
 
         video_files = config.get_current_user_videos()
-        labels_file = video_files[video_id]["label_file"]
+        labels_file = video_files[video_uid]["label_file"]
         with open(labels_file, "w") as f:
             json.dump(all_users.model_dump(), f, indent=2)
 
         # Emit a SocketIO event to notify all clients, including the client_id if provided
         try:
-            payload = {"video_id": video_id, "client_id": client_id}
+            payload = {"video_uid": video_uid, "client_id": client_id}
             socketio.emit("labels_updated", payload)
         except Exception as e:
             logging.warning("SocketIO emit failed:", e)
 
-    @app.route("/api/labels/<int:video_id>", methods=["GET"])
+    @app.route("/api/labels/<string:video_uid>", methods=["GET"])
     @common.login_required
     @config_manager.with_config
-    def get_labels(config: config_manager.Config, video_id: int):
-        labels = _load_labels(config, video_id)
+    def get_labels(config: config_manager.Config, video_uid: str):
+        labels = _load_labels(config, video_uid)
         return jsonify([label.model_dump() for label in labels])
 
     @app.route("/api/video-files", methods=["GET"])
@@ -88,7 +88,7 @@ def add_common_endpoints(
         video_files = config.get_current_user_videos()
         # Return video files without the path.
         file_desc: list[common_types.VideoFileForProps] = []
-        for video_id, video in enumerate(video_files):
+        for video_uid, video in video_files.items():
             file_desc.append(video.copy())
 
             if "video_alias" in video:
@@ -103,7 +103,7 @@ def add_common_endpoints(
             file_desc[-1]["readonly"] = readonly
 
             try:
-                label_count = len(_load_labels(config, video_id))
+                label_count = len(_load_labels(config, video_uid))
                 if label_count > 0:
                     file_desc[-1][
                         "video_file"
@@ -118,10 +118,10 @@ def add_common_endpoints(
     def get_label_types(config: config_manager.Config):
         return jsonify(config.get_label_types())
 
-    @app.route("/api/set-labels/<int:video_id>", methods=["POST"])
+    @app.route("/api/set-labels/<string:video_uid>", methods=["POST"])
     @common.login_required
     @config_manager.with_config
-    def set_labels(config: config_manager.Config, video_id: int):
+    def set_labels(config: config_manager.Config, video_uid: str):
         # Expect request.json to be a dict with keys: "labels" (list) and "client_id" (str)
         data = request.json
         labels_data = data.get("labels", [])  # type: ignore
@@ -131,7 +131,7 @@ def add_common_endpoints(
             for label in typing.cast(list[dict[str, str]], labels_data)
         ]
 
-        _save_labels(config, video_id, labels, client_id=client_id)
+        _save_labels(config, video_uid, labels, client_id=client_id)
         return jsonify(
             {"status": "success", "labels": [label.model_dump() for label in labels]}
         )

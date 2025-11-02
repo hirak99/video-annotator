@@ -25,6 +25,9 @@ class VideoFileInternal(TypedDict):
     # If not provided, all users will have access.
     acl: NotRequired[list[str]]
 
+    # Unique id of the video for the client.
+    uid: str
+
 
 # Config type with -
 # {
@@ -47,3 +50,5 @@ class VideoFileForProps(TypedDict):
     label_file: str
     # This need not be declared, will be loaded from the .json file +r attribute.
     readonly: bool
+    # Unique id of the video for the client
+    uid: str

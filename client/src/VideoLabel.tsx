@@ -25,6 +25,7 @@ interface VideoFileProps {
     video_file: string;
     label_file: string;  // Not directly used by the client. Server handles save and load to json.
     readonly: boolean;
+    uid: string;  // Unique hash for this video.
 }
 
 const VideoPlayer: React.FC = () => {
@@ -40,8 +41,9 @@ const VideoPlayer: React.FC = () => {
     const [seeking, setSeeking] = useState(false);
     const [loading, setLoading] = useState(true); // New loading state
     const [selectedBoxId, setSelectedBoxId] = useState<string | null>(null);
-    const [currentVideoIdx, setCurrentVideoIdx] = useState<number>(0);
     const [videoFiles, setVideoFiles] = useState<VideoFileProps[]>([]);
+    const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(0);
+    const [currentVideoUid, setCurrentVideoUid] = useState<string | null>(null);
     const [labelTypes, setLabelTypes] = useState<LabelType[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);
 
@@ -51,16 +53,22 @@ const VideoPlayer: React.FC = () => {
 
 
     useEffect(() => {
+        if (!videoFiles[currentVideoIndex]) return;
+        setCurrentVideoUid(videoFiles[currentVideoIndex].uid);
+    }, [videoFiles, currentVideoIndex]);
+
+    useEffect(() => {
         if (!BACKEND_URL) return;
+        if (!currentVideoUid) return;
         // Server serves further suffixes, such as .../info and .../sprite.
-        setThumbSpriteUrl(`${BACKEND_URL}/api/thumbnail/${currentVideoIdx}/sprite`);
-        getBackendPromise(`/api/thumbnail/${currentVideoIdx}/info`).then(response => {
+        setThumbSpriteUrl(`${BACKEND_URL}/api/thumbnail/${currentVideoUid}/sprite`);
+        getBackendPromise(`/api/thumbnail/${currentVideoUid}/info`).then(response => {
             setThumbIntervalSecs(response.data.interval_secs);
         }).catch(() => {
             console.warn("Thumbnail info not found - is it being served?");
             setThumbIntervalSecs(null);
         });
-    }, [currentVideoIdx]);
+    }, [currentVideoUid]);
 
     const [videoDimensions, setVideoDimensions] = useState({
         naturalWidth: 0,
@@ -93,7 +101,7 @@ const VideoPlayer: React.FC = () => {
             }
             setVideoFiles(videoFiles); // Store video files
             if (videoFiles.length > 0) {
-                setCurrentVideoIdx(0);
+                setCurrentVideoIndex(0);
             }
         });
     }, [navigate]);
@@ -102,11 +110,11 @@ const VideoPlayer: React.FC = () => {
         // Socket.IO connection for real-time label updates
         const socketUrl = BACKEND_URL?.replace(/^http/, "ws") || "";
         const socket: Socket = io(socketUrl, { transports: ["websocket"] });
-        socket.on("labels_updated", (data: { video_id: number, client_id?: string }) => {
+        socket.on("labels_updated", (data: { video_uid: string, client_id?: string }) => {
             // Ignore if this client initiated the change
             if (data.client_id && data.client_id === clientIdRef.current) return;
-            if (data.video_id === currentVideoIdx) {
-                getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
+            if (data.video_uid === currentVideoUid) {
+                getBackendPromise(`/api/labels/${currentVideoUid}`).then(response => {
                     setBoxes(response.data);
                     lastBackendBoxes.current = response.data;
                 });
@@ -115,14 +123,15 @@ const VideoPlayer: React.FC = () => {
         return () => {
             socket.disconnect();
         };
-    }, [currentVideoIdx]);
+    }, [currentVideoUid]);
 
     useEffect(() => {
-        getBackendPromise(`/api/labels/${currentVideoIdx}`).then(response => {
+        if (!currentVideoUid) return;
+        getBackendPromise(`/api/labels/${currentVideoUid}`).then(response => {
             setBoxes(response.data);  // Get labeled boxes data for the current video
             lastBackendBoxes.current = response.data;
         });
-    }, [currentVideoIdx]);
+    }, [currentVideoUid]);
 
     const handleTimeUpdate = (event: React.SyntheticEvent<HTMLVideoElement>) => {
         setCurrentTime(event.currentTarget.currentTime);
@@ -232,7 +241,7 @@ const VideoPlayer: React.FC = () => {
         throttleTimeout.current = setTimeout(() => {
             withSaving(
                 axios.post(
-                    `${BACKEND_URL}/api/set-labels/${currentVideoIdx}`,
+                    `${BACKEND_URL}/api/set-labels/${currentVideoUid}`,
                     {
                         labels: latestBoxesRef.current,
                         client_id: clientIdRef.current,
@@ -320,7 +329,7 @@ const VideoPlayer: React.FC = () => {
         setEnableEdit(false);
         // Display "Loading...". Cleared on load.
         setLoading(true);
-    }, [currentVideoIdx]);
+    }, [currentVideoUid]);
 
     // Optionally, set loading to false on error (not strictly required, but for robustness)
     const handleVideoError = () => {
@@ -353,10 +362,10 @@ const VideoPlayer: React.FC = () => {
                             type="checkbox"
                             checked={enableEdit}
                             onChange={e => setEnableEdit(e.target.checked)}
-                            disabled={videoFiles[currentVideoIdx]?.readonly}
+                            disabled={videoFiles[currentVideoIndex]?.readonly}
                             style={{ marginRight: '6px' }}
                         />
-                        {videoFiles[currentVideoIdx]?.readonly ? <span style={{ color: "orange", marginLeft: "5px" }}>File is readonly in the server. Request server admin for edit access.</span> :
+                        {videoFiles[currentVideoIndex]?.readonly ? <span style={{ color: "orange", marginLeft: "5px" }}>File is readonly in the server. Request server admin for edit access.</span> :
                             enableEdit ? <span style={{ color: "green", marginLeft: "5px" }}>Editing is now enabled.</span> :
                                 <span style={{ color: "red", marginLeft: "5px" }}>For safety, EDITING IS DISABLED. Click to enable.</span>}
                     </label>
@@ -367,67 +376,68 @@ const VideoPlayer: React.FC = () => {
             <div style={{ position: 'relative', zIndex: 1000 }}>
                 <VideoSelect
                     videoFiles={videoFiles}
-                    currentVideoIdx={currentVideoIdx}
-                    setCurrentVideoIdx={setCurrentVideoIdx}
+                    currentVideoIndex={currentVideoIndex}
+                    setCurrentVideoIndex={setCurrentVideoIndex}
                 />
             </div>
 
             <div style={{ display: 'flex' }}> {/* Main container with flex display, added margin-top to account for fixed VideoSelect */}
                 <div style={{ width: '70%' }}>
                     {/* Video and boxes. Everything in this div must have relative positioning. */}
-                    <div style={{ position: 'relative' }}>
-                        {/* Video Player */}
-                        <video
-                            controls
-                            controlsList='nofullscreen'  // Seems Firefox does not respect this.
-                            disablePictureInPicture
-                            muted
-                            // Could help with error "fetching process of the media was abotrted at user's request".
-                            onAbort={() => console.debug('Video fetch aborted')}
-                            onClick={() => {
-                                // Play / pause.
-                                if (!playerRef.current) return;
-                                if (playerRef.current.paused) {
-                                    playerRef.current.play();
-                                } else {
-                                    playerRef.current.pause();
-                                }
-                            }}
-                            onError={handleVideoError}
-                            onLoadedMetadata={handleVideoLoad}
-                            onTimeUpdate={handleTimeUpdate}
-                            preload='metadata'
-                            ref={playerRef}
-                            src={`${BACKEND_URL}/api/video/${currentVideoIdx}`}
-                            style={{ width: '100%', backgroundColor: 'black' }}
-                        />
+                    {currentVideoUid &&
+                        <div style={{ position: 'relative' }}>
+                            {/* Video Player */}
+                            <video
+                                controls
+                                controlsList='nofullscreen'  // Seems Firefox does not respect this.
+                                disablePictureInPicture
+                                muted
+                                // Could help with error "fetching process of the media was abotrted at user's request".
+                                onAbort={() => console.debug('Video fetch aborted')}
+                                onClick={() => {
+                                    // Play / pause.
+                                    if (!playerRef.current) return;
+                                    if (playerRef.current.paused) {
+                                        playerRef.current.play();
+                                    } else {
+                                        playerRef.current.pause();
+                                    }
+                                }}
+                                onError={handleVideoError}
+                                onLoadedMetadata={handleVideoLoad}
+                                onTimeUpdate={handleTimeUpdate}
+                                preload='metadata'
+                                ref={playerRef}
+                                src={`${BACKEND_URL}/api/video/${currentVideoUid}`}
+                                style={{ width: '100%', backgroundColor: 'black' }}
+                            />
 
-                        {saving &&
-                            <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
-                                Saving...
-                            </div>
-                        }
+                            {saving &&
+                                <div style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', backgroundColor: 'rgba(255, 255, 255, 0.5)' }}>
+                                    Saving...
+                                </div>
+                            }
 
-                        {(loading || buffering || seeking) &&
-                            <div className="seeking-overlay">
-                                <div className="seeking-spinner"></div>
-                                <div className="seeking-text">{loading ? "Loading..." : buffering ? "Buffering..." : "Seeking..."}</div>
-                            </div>
-                        }
+                            {(loading || buffering || seeking) &&
+                                <div className="seeking-overlay">
+                                    <div className="seeking-spinner"></div>
+                                    <div className="seeking-text">{loading ? "Loading..." : buffering ? "Buffering..." : "Seeking..."}</div>
+                                </div>
+                            }
 
-                        {/* Label Boxes */}
-                        <LabelRenderer
-                            boxes={boxes}
-                            currentTime={currentTime}
-                            videoDimensions={videoDimensions}
-                            handleUpdateBox={handleUpdateBox}
-                            setBoxes={setBoxes}
-                            setAndUpdateBoxes={setAndUpdateBoxes}
-                            selectedBoxId={selectedBoxId}
-                            setSelectedBoxId={setSelectedBoxId}
-                            labelTypes={labelTypes}
-                        />
-                    </div>
+                            {/* Label Boxes */}
+                            <LabelRenderer
+                                boxes={boxes}
+                                currentTime={currentTime}
+                                videoDimensions={videoDimensions}
+                                handleUpdateBox={handleUpdateBox}
+                                setBoxes={setBoxes}
+                                setAndUpdateBoxes={setAndUpdateBoxes}
+                                selectedBoxId={selectedBoxId}
+                                setSelectedBoxId={setSelectedBoxId}
+                                labelTypes={labelTypes}
+                            />
+                        </div>}
 
                     {/* Video Seek Bar */}
                     <VideoSeekBar
