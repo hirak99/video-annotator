@@ -2,7 +2,6 @@ import json
 import logging
 import os
 import typing
-from typing import Callable
 
 import flask
 from flask import jsonify
@@ -13,6 +12,7 @@ import pydantic
 from . import annotation_types
 from . import common
 from . import common_types
+from . import config_manager
 
 # Unused functions for flask endpoints.
 # pyright: reportUnusedFunction=false
@@ -20,10 +20,12 @@ from . import common_types
 
 def add_common_endpoints(
     app: flask.Flask,
-    current_user_videos_fn: Callable[[], list[common_types.VideoFileInternal]],
-    label_types: list[common_types.LabelProperties],
     socketio: flask_socketio.SocketIO,
 ):
+    config = config_manager.instance()
+    current_user_videos_fn = config.get_current_user_videos
+    label_types = config.get_label_types()
+
     def _load_labels_all_users(video_id: int) -> annotation_types.UserAnnotations:
         video_files = current_user_videos_fn()
         labels_file = video_files[video_id]["label_file"]

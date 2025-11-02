@@ -6,16 +6,11 @@ from flask import jsonify
 from flask import request
 import flask_cors
 import flask_socketio
-import yaml
 
-from . import common
 from . import common_types
+from . import config_manager
 from . import data_endpoints
-from . import preprocess_movies
 from . import streaming_endpoints
-
-# Note: Do not use a console argument, unless you also modify gunicorn.py.
-_CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
 
 # Unused functions for flask endpoints.
 # pyright: reportUnusedFunction=false
@@ -30,18 +25,6 @@ class MainApp:
         self.app.secret_key = "vO2hlWdvaKzL0smYUCrQtGgggzxA7paw"
         self.socketio = flask_socketio.SocketIO(self.app, cors_allowed_origins="*")
 
-        # Load video files from YAML.
-        logging.info("Loading configuration from " + _CONFIG_FILE)
-        with open(_CONFIG_FILE, "r") as f:
-            config = yaml.safe_load(f)
-
-        label_types: list[common_types.LabelProperties] = config["labels"]
-        video_files: list[common_types.VideoFileInternal] = config["videos"]
-
-        # Preprocess thumbnails etc.
-        for video_file in video_files:
-            preprocess_movies.ProcessedMovie(video_file["video_file"])
-
         @self.app.route("/logout", methods=["POST"])
         def logout():
             flask.session.clear()
@@ -52,7 +35,7 @@ class MainApp:
         def login():
             username = request.json.get("username")  # type: ignore
             password = request.json.get("password")  # type: ignore
-            users: list[common_types.User] = config["users"]
+            users: list[common_types.User] = config_manager.instance().get_users()
             logging.info(flask.session)
             flask.session.clear()
             for user in users:
@@ -66,26 +49,14 @@ class MainApp:
                     401,
                 )
 
-        # Filters video files to include only videos visible by the current user.
-        # A function, since current_user() is only accessible inside a session.
-        def get_current_user_videos() -> list[common_types.VideoFileInternal]:
-            return [
-                video_file
-                for video_file in video_files
-                if "acl" not in video_file or common.current_user() in video_file["acl"]
-            ]
-
         # Label getting and setting, list videos.
         data_endpoints.add_common_endpoints(
             self.app,
-            current_user_videos_fn=get_current_user_videos,
-            label_types=label_types,
             socketio=self.socketio,
         )
 
         # Video streaming.
         streaming_endpoints.VideoStreamer().add_video_endpoints(
-            current_user_videos_fn=get_current_user_videos,
             app=self.app,
         )
 

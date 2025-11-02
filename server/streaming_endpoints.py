@@ -1,14 +1,13 @@
 import logging
 import os
 import subprocess
-from typing import Callable
 
 import flask
 from flask import jsonify
 from flask import request
 
 from . import common
-from . import common_types
+from . import config_manager
 from . import preprocess_movies
 
 # Deleted on exit.
@@ -86,8 +85,9 @@ class VideoStreamer:
     def add_video_endpoints(
         self,
         app: flask.Flask,
-        current_user_videos_fn: Callable[[], list[common_types.VideoFileInternal]],
     ):
+        current_user_videos_fn = config_manager.instance().get_current_user_videos
+
         # # Preprocess thumbnails etc.
         # processed_movie_data: list[preprocess_movies.ProcessedMovie] = []
         # for video_file in videos_for_current_user():

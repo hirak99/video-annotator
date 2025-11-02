@@ -26,6 +26,18 @@ class VideoFileInternal(TypedDict):
     acl: NotRequired[list[str]]
 
 
+# Config type with -
+# {
+#   "labels": list[common_types.LabelProperties],
+#   "videos": list[common_types.VideoFileInternal],
+#   "users": list[common_types:User],
+# }
+class Config(TypedDict):
+    labels: list[LabelProperties]
+    videos: list[VideoFileInternal]
+    users: list[User]
+
+
 class VideoFileForProps(TypedDict):
     """Result of api/video-files for the client."""
 
