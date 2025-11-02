@@ -39,7 +39,6 @@ class _ConfigRescanner:
                 last_rescan = time.time()
                 logging.info("Rescanning config.")
                 config_manager.reload_config()
-                logging.info("Done rescanning config.")
             time.sleep(1)
 
 
