@@ -18,62 +18,66 @@ from . import config_manager
 # pyright: reportUnusedFunction=false
 
 
+def _load_labels_all_users(
+    config: config_manager.Config, video_uid: str
+) -> annotation_types.UserAnnotations:
+    video_files = config.get_current_user_videos()
+    labels_file = video_files[video_uid]["label_file"]
+    if os.path.exists(labels_file):
+        with open(labels_file, "r") as f:
+            return annotation_types.UserAnnotations.model_validate_json(f.read())
+    return annotation_types.UserAnnotations(by_user={})
+
+
+# Simple function to get labels from a JSON file
+def _load_labels(
+    config: config_manager.Config, video_uid: str
+) -> list[annotation_types.AnnotationProps]:
+    all_users = _load_labels_all_users(config, video_uid)
+    return all_users.by_user.get(common.current_user(), [])
+
+
+# Simple function to save labels to a JSON file
+def _save_labels(
+    config: config_manager.Config,
+    video_uid: str,
+    labels: list[annotation_types.AnnotationProps],
+    client_id: str,
+    socketio: flask_socketio.SocketIO,
+):
+    all_users = _load_labels_all_users(config, video_uid)
+
+    def dump_label(label):
+        d = label.model_dump()
+        if hasattr(label, "label") and isinstance(
+            label.label, annotation_types.BoxLabel
+        ):
+            d["label"] = label.label.model_dump_rounded()
+        return d
+
+    all_users.by_user[common.current_user()] = [
+        annotation_types.AnnotationProps.model_validate(x) for x in labels
+    ]
+
+    json.dumps([dump_label(label) for label in labels])
+
+    video_files = config.get_current_user_videos()
+    labels_file = video_files[video_uid]["label_file"]
+    with open(labels_file, "w") as f:
+        json.dump(all_users.model_dump(), f, indent=2)
+
+    # Emit a SocketIO event to notify all clients, including the client_id if provided
+    try:
+        payload = {"video_uid": video_uid, "client_id": client_id}
+        socketio.emit("labels_updated", payload)
+    except Exception as e:
+        logging.warning("SocketIO emit failed:", e)
+
+
 def add_common_endpoints(
     app: flask.Flask,
     socketio: flask_socketio.SocketIO,
 ):
-    def _load_labels_all_users(
-        config: config_manager.Config, video_uid: str
-    ) -> annotation_types.UserAnnotations:
-        video_files = config.get_current_user_videos()
-        labels_file = video_files[video_uid]["label_file"]
-        if os.path.exists(labels_file):
-            with open(labels_file, "r") as f:
-                return annotation_types.UserAnnotations.model_validate_json(f.read())
-        return annotation_types.UserAnnotations(by_user={})
-
-    # Simple function to get labels from a JSON file
-    def _load_labels(
-        config: config_manager.Config, video_uid: str
-    ) -> list[annotation_types.AnnotationProps]:
-        all_users = _load_labels_all_users(config, video_uid)
-        return all_users.by_user.get(common.current_user(), [])
-
-    # Simple function to save labels to a JSON file
-    def _save_labels(
-        config: config_manager.Config,
-        video_uid: str,
-        labels: list[annotation_types.AnnotationProps],
-        client_id: str,
-    ):
-        all_users = _load_labels_all_users(config, video_uid)
-
-        def dump_label(label):
-            d = label.model_dump()
-            if hasattr(label, "label") and isinstance(
-                label.label, annotation_types.BoxLabel
-            ):
-                d["label"] = label.label.model_dump_rounded()
-            return d
-
-        all_users.by_user[common.current_user()] = [
-            annotation_types.AnnotationProps.model_validate(x) for x in labels
-        ]
-
-        json.dumps([dump_label(label) for label in labels])
-
-        video_files = config.get_current_user_videos()
-        labels_file = video_files[video_uid]["label_file"]
-        with open(labels_file, "w") as f:
-            json.dump(all_users.model_dump(), f, indent=2)
-
-        # Emit a SocketIO event to notify all clients, including the client_id if provided
-        try:
-            payload = {"video_uid": video_uid, "client_id": client_id}
-            socketio.emit("labels_updated", payload)
-        except Exception as e:
-            logging.warning("SocketIO emit failed:", e)
-
     @app.route("/api/labels/<string:video_uid>", methods=["GET"])
     @common.login_required
     @config_manager.with_config
@@ -131,7 +135,7 @@ def add_common_endpoints(
             for label in typing.cast(list[dict[str, str]], labels_data)
         ]
 
-        _save_labels(config, video_uid, labels, client_id=client_id)
+        _save_labels(config, video_uid, labels, client_id=client_id, socketio=socketio)
         return jsonify(
             {"status": "success", "labels": [label.model_dump() for label in labels]}
         )
