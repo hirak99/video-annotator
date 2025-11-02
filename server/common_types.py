@@ -32,7 +32,7 @@ class VideoFileInternal(TypedDict):
 #   "videos": list[common_types.VideoFileInternal],
 #   "users": list[common_types:User],
 # }
-class Config(TypedDict):
+class ConfigType(TypedDict):
     labels: list[LabelProperties]
     videos: list[VideoFileInternal]
     users: list[User]

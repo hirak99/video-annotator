@@ -86,8 +86,6 @@ class VideoStreamer:
         self,
         app: flask.Flask,
     ):
-        current_user_videos_fn = config_manager.instance().get_current_user_videos
-
         # # Preprocess thumbnails etc.
         # processed_movie_data: list[preprocess_movies.ProcessedMovie] = []
         # for video_file in videos_for_current_user():
@@ -95,15 +93,18 @@ class VideoStreamer:
         #         preprocess_movies.ProcessedMovie(video_file["video_file"])
         #     )
 
-        def _thumbnail_data(video_id: int) -> preprocess_movies.ProcessedMovie:
+        def _thumbnail_data(
+            config: config_manager.Config, video_id: int
+        ) -> preprocess_movies.ProcessedMovie:
             return preprocess_movies.ProcessedMovie(
-                current_user_videos_fn()[video_id]["video_file"]
+                config.get_current_user_videos()[video_id]["video_file"]
             )
 
         @app.route("/api/video/<int:video_id>", methods=["GET"])
         @common.login_required
-        def stream_video(video_id):
-            video = current_user_videos_fn()[video_id]
+        @config_manager.with_config
+        def stream_video(config: config_manager.Config, video_id: int):
+            video = config.get_current_user_videos()[video_id]
             if not video:
                 return (
                     jsonify(
@@ -119,9 +120,10 @@ class VideoStreamer:
 
         @app.route("/api/thumbnail/<int:video_id>/sprite", methods=["GET"])
         @common.login_required
-        def get_thumbnail_sprite(video_id: int):
+        @config_manager.with_config
+        def get_thumbnail_sprite(config: config_manager.Config, video_id: int):
             # Serve the thumbnail sprite binary data with correct MIME type
-            sprite_fname = _thumbnail_data(video_id).thumbnail_sprite_fname
+            sprite_fname = _thumbnail_data(config, video_id).thumbnail_sprite_fname
             if not os.path.exists(sprite_fname):
                 return (
                     jsonify(
@@ -138,8 +140,9 @@ class VideoStreamer:
 
         @app.route("/api/thumbnail/<int:video_id>/info", methods=["GET"])
         @common.login_required
-        def get_thumbnail_info(video_id: int):
-            return jsonify(_thumbnail_data(video_id).thumbnail_info)
+        @config_manager.with_config
+        def get_thumbnail_info(config: config_manager.Config, video_id: int):
+            return jsonify(_thumbnail_data(config, video_id).thumbnail_info)
 
     def __del__(self):
         """Remove temporary files after request."""

@@ -1,5 +1,7 @@
 import logging
 import os
+import threading
+import time
 
 import flask
 from flask import jsonify
@@ -15,6 +17,31 @@ from . import streaming_endpoints
 # Unused functions for flask endpoints.
 # pyright: reportUnusedFunction=false
 
+_CONFIG_RESCAN_PERIOD = 60
+
+
+class _ConfigRescanner:
+    """Periodically rescan config, by just loading it.
+
+    This will ensure any new videos are processed for thumbnails, etc., without having
+    to wait for a user query.
+    """
+
+    def __init__(self) -> None:
+        self._stop = False
+        self._thread = threading.Thread(target=self.run, daemon=True)
+        self._thread.start()
+
+    def run(self):
+        last_rescan = 0
+        while not self._stop:
+            if time.time() - last_rescan > _CONFIG_RESCAN_PERIOD:
+                last_rescan = time.time()
+                logging.info("Rescanning config.")
+                config_manager.reload_config()
+                logging.info("Done rescanning config.")
+            time.sleep(1)
+
 
 class MainApp:
     def __init__(self):
@@ -25,6 +52,8 @@ class MainApp:
         self.app.secret_key = "vO2hlWdvaKzL0smYUCrQtGgggzxA7paw"
         self.socketio = flask_socketio.SocketIO(self.app, cors_allowed_origins="*")
 
+        self._rescanner = _ConfigRescanner()
+
         @self.app.route("/logout", methods=["POST"])
         def logout():
             flask.session.clear()
@@ -32,10 +61,11 @@ class MainApp:
             return jsonify({"status": "success"})
 
         @self.app.route("/login", methods=["POST"])
-        def login():
+        @config_manager.with_config
+        def login(config: config_manager.Config):
             username = request.json.get("username")  # type: ignore
             password = request.json.get("password")  # type: ignore
-            users: list[common_types.User] = config_manager.instance().get_users()
+            users: list[common_types.User] = config.get_users()
             logging.info(flask.session)
             flask.session.clear()
             for user in users:
