@@ -1,4 +1,3 @@
-import json
 import logging
 import os
 import typing
@@ -20,21 +19,24 @@ from . import config_manager
 
 def _load_labels_all_users(
     config: config_manager.Config, video_uid: str
-) -> annotation_types.UserAnnotations:
+) -> annotation_types.AllAnnotationsV2:
     video_files = config.get_current_user_videos()
     labels_file = video_files[video_uid]["label_file"]
-    if os.path.exists(labels_file):
-        with open(labels_file, "r") as f:
-            return annotation_types.UserAnnotations.model_validate_json(f.read())
-    return annotation_types.UserAnnotations(by_user={})
+    if not os.path.exists(labels_file):
+        return annotation_types.AllAnnotationsV2(by_user={})
+    return annotation_types.AllAnnotationsV2.load(labels_file)
 
 
 # Simple function to get labels from a JSON file
 def _load_labels(
     config: config_manager.Config, video_uid: str
 ) -> list[annotation_types.AnnotationProps]:
-    all_users = _load_labels_all_users(config, video_uid)
-    return all_users.by_user.get(common.current_user(), [])
+    all_annotations = _load_labels_all_users(config, video_uid)
+    user = common.current_user()
+    try:
+        return all_annotations.by_user[user].annotations
+    except KeyError:
+        return []
 
 
 # Simple function to save labels to a JSON file
@@ -55,16 +57,13 @@ def _save_labels(
             d["label"] = label.label.model_dump_rounded()
         return d
 
-    all_users.by_user[common.current_user()] = [
+    all_users.by_user[common.current_user()].annotations = [
         annotation_types.AnnotationProps.model_validate(x) for x in labels
     ]
 
-    json.dumps([dump_label(label) for label in labels])
-
     video_files = config.get_current_user_videos()
     labels_file = video_files[video_uid]["label_file"]
-    with open(labels_file, "w") as f:
-        json.dump(all_users.model_dump(), f, indent=2)
+    all_users.save(labels_file)
 
     # Emit a SocketIO event to notify all clients, including the client_id if provided
     try:
