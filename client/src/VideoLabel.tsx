@@ -319,7 +319,7 @@ const VideoPlayer: React.FC = () => {
         return () => {
             video.removeEventListener('seeked', handleSeeked);
         };
-    }, []);
+    }, [currentVideoUid]);
 
     // Set loading to true when currentVideoIdx changes (new video selected)
     useEffect(() => {
