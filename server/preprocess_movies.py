@@ -1,10 +1,11 @@
+import json
 import logging
 import os
 import random
 import shutil
 import string
 import subprocess
-import json
+import time
 
 
 def _get_video_duration_sec(fname: str) -> float:
@@ -55,9 +56,25 @@ class ProcessedMovie:
             _PROCESSED_ROOT, os.path.basename(movie_fname)
         )
 
+        self._temp_cleanup()
+
         if not os.path.exists(self.thumbnail_sprite_fname):
             os.makedirs(self._processed_dir, exist_ok=True)
             self._make_thumb_sprites()
+
+    def _temp_cleanup(self):
+        # Delete all "_temp_*" directories modified more than a day ago.
+        if not os.path.isdir(_PROCESSED_ROOT):
+            return
+        for dir_name in os.listdir(_PROCESSED_ROOT):
+            if not dir_name.startswith("_temp_"):
+                continue
+            dir_path = os.path.join(_PROCESSED_ROOT, dir_name)
+            if not os.path.isdir(dir_path):
+                continue
+            if time.time() - os.path.getmtime(dir_path) > 60 * 60 * 24:
+                shutil.rmtree(dir_path)
+                logging.info(f"Deleted abandoned temp dir: {dir_path}")
 
     @property
     def thumbnail_sprite_fname(self) -> str:
