@@ -19,7 +19,7 @@ _R_TYPEVAR = TypeVar("_R_TYPEVAR")
 _CONFIG_FILE = os.getenv("ANNOTATION_CONFIG_FILE", "configuration_example.yaml")
 
 # Ensure this lock is used while writing to the config when the server is running.
-_CONFIG_FILE_LOCK = _CONFIG_FILE + ".lock"
+_CONFIG_FILE_LOCK = "/tmp/video_annotator.config.lock"
 
 
 class _ConfigDataSingleton:

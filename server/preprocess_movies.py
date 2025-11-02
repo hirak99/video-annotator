@@ -7,6 +7,8 @@ import string
 import subprocess
 import time
 
+import filelock
+
 
 def _get_video_duration_sec(fname: str) -> float:
     """Returns the duration of the video in seconds using ffprobe."""
@@ -58,9 +60,13 @@ class ProcessedMovie:
 
         self._temp_cleanup()
 
-        if not os.path.exists(self.thumbnail_sprite_fname):
-            os.makedirs(self._processed_dir, exist_ok=True)
-            self._make_thumb_sprites()
+        # Use the lock to avoid flask or gunicorn creating thumbs from each thread.
+        # Use one lock for all videos.
+        lockfile = "/tmp/video_annotator.thumbnails.lock"
+        with filelock.FileLock(lockfile):
+            if not os.path.exists(self.thumbnail_sprite_fname):
+                os.makedirs(self._processed_dir, exist_ok=True)
+                self._make_thumb_sprites()
 
     def _temp_cleanup(self):
         # Delete all "_temp_*" directories modified more than a day ago.
