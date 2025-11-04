@@ -18,6 +18,7 @@ Following are a few examples.
 - **Automatic saving** to prevent work loss.
 - **Supports multiple workers** simultaneously if multiple users log in via different clients.
 - **Supports ACL** to limit visibility of videos to workers.
+- **Supports workspace sharing** so that multiple annotators can see each other's work and collaborate.
 - **Realtime propagation of edits** across all open clients to ensure work is not lost if two people happen to look at the same video via the exposed WebUI.
 - **On the fly MKV to MP4 conversion** to increase browser compatibility. However, full transcoding is not yet supported and must be done as a pre-step if needed.
 - **Basic security** to restrict video access to users who have the correct password. However, this is not intended for high-security environments.

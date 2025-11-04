@@ -83,7 +83,15 @@ class _PrivateClass:
 class Config:
     def __init__(self, _prevent_external_construction: _PrivateClass) -> None:
         logging.info("New Config")
-        self._config = _ConfigDataSingleton().get()
+        self._config: common_types.ConfigType = _ConfigDataSingleton().get()
+
+    def get_workspace(self, username: str) -> str:
+        for user in self._config["users"]:
+            if user["username"] == username:
+                if "workspace" not in user:
+                    return username
+                return user["workspace"]
+        raise ValueError(f"User {username} not found")
 
     def get_label_types(self) -> list[common_types.LabelProperties]:
         return self._config["labels"]

@@ -4,6 +4,7 @@ from typing import NotRequired, TypedDict
 class User(TypedDict):
     username: str
     password: str
+    workspace: NotRequired[str]
 
 
 class LabelProperties(TypedDict):

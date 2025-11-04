@@ -38,7 +38,9 @@ class UserAnnotation(pydantic.BaseModel):
 class AllAnnotationsV2(pydantic.BaseModel):
     # Annotation data format.
     format: Literal["v2"] = "v2"
-    # Annotations by all users.
+    # Annotations by all workspaces.
+    # If the user does not have a workspace defined, the key will default to username.
+    # The key "by_user" is legacy name, better understood as "by_workspace".
     by_user: dict[str, UserAnnotation]
 
     @classmethod

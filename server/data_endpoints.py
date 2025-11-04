@@ -33,8 +33,9 @@ def _load_labels(
 ) -> list[annotation_types.AnnotationProps]:
     all_annotations = _load_labels_all_users(config, video_uid)
     user = common.current_user()
+    workspace = config.get_workspace(user)
     try:
-        return all_annotations.by_user[user].annotations
+        return all_annotations.by_user[workspace].annotations
     except KeyError:
         return []
 
@@ -47,7 +48,7 @@ def _save_labels(
     client_id: str,
     socketio: flask_socketio.SocketIO,
 ):
-    all_users = _load_labels_all_users(config, video_uid)
+    all_annotations = _load_labels_all_users(config, video_uid)
 
     def dump_label(label):
         d = label.model_dump()
@@ -57,13 +58,18 @@ def _save_labels(
             d["label"] = label.label.model_dump_rounded()
         return d
 
-    all_users.by_user[common.current_user()].annotations = [
+    workspace = config.get_workspace(common.current_user())
+    if workspace not in all_annotations.by_user:
+        all_annotations.by_user[workspace] = annotation_types.UserAnnotation(
+            annotations=[]
+        )
+    all_annotations.by_user[workspace].annotations = [
         annotation_types.AnnotationProps.model_validate(x) for x in labels
     ]
 
     video_files = config.get_current_user_videos()
     labels_file = video_files[video_uid]["label_file"]
-    all_users.save(labels_file)
+    all_annotations.save(labels_file)
 
     # Emit a SocketIO event to notify all clients, including the client_id if provided
     try:
