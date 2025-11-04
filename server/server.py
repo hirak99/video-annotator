@@ -37,7 +37,6 @@ class _ConfigRescanner:
         while not self._stop:
             if time.time() - last_rescan > _CONFIG_RESCAN_PERIOD:
                 last_rescan = time.time()
-                logging.info("Rescanning config.")
                 config_manager.reload_config()
             time.sleep(1)
 

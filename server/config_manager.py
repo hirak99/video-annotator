@@ -52,9 +52,13 @@ class _ConfigDataSingleton:
 
         with filelock.FileLock(_CONFIG_FILE_LOCK):
             logging.info(f"Reading config from {os.path.abspath(_CONFIG_FILE)!r}")
-            with open(_CONFIG_FILE, "r") as f:
-                self._config: common_types.ConfigType = yaml.safe_load(f)
-            self._last_mtime = mtime
+            try:
+                with open(_CONFIG_FILE, "r") as f:
+                    self._config: common_types.ConfigType = yaml.safe_load(f)
+                self._last_mtime = mtime
+            except FileNotFoundError:
+                logging.warning(f"Config file {_CONFIG_FILE!r} not found.")
+                return
 
         # Preprocess thumbnails etc.
         self._videos_by_uid = {}
@@ -64,6 +68,7 @@ class _ConfigDataSingleton:
             ).hexdigest()[:16]
             self._videos_by_uid[video_file["uid"]] = video_file
             preprocess_movies.ProcessedMovie(video_file["video_file"])
+        logging.info("All thumbnails ready.")
 
     def get(self) -> common_types.ConfigType:
         self._reload()
