@@ -4,6 +4,8 @@
 users:
   - username: bravo
     password: bravo123
+    # Optional. If not present, the workspace name defaults to the username.
+    workspace: common
 
 labels:
   - name: (unknown)

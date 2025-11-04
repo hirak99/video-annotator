@@ -21,6 +21,8 @@ def _load_labels_all_users(
     config: config_manager.Config, video_uid: str
 ) -> annotation_types.AllAnnotationsV2:
     video_files = config.get_current_user_videos()
+    # TODO: Catch KeyError and inform the client it if video_uid is no longer present.
+    # This can happen if the user lost access to the video.
     labels_file = video_files[video_uid]["label_file"]
     if not os.path.exists(labels_file):
         return annotation_types.AllAnnotationsV2(by_user={})
