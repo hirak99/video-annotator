@@ -3,6 +3,11 @@
 
 users:
   - username: bravo
+    # Note: Password is set here, and as a consequence stored in plain text in this
+    # file. This approach favors convenience over security, and is practical since there
+    # is no client-side implementation of password management yet. If needed, passowrd
+    # management can be implemented on client, and then a salted user-specific hash
+    # should be stored.
     password: bravo123
     # Optional. If not present, the workspace name defaults to the username.
     workspace: common
