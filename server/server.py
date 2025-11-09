@@ -45,10 +45,19 @@ class MainApp:
     def __init__(self):
         self.app: flask.Flask = flask.Flask(__name__)
         # Enable CORS for frontend to communicate with the backend.
-        flask_cors.CORS(self.app, supports_credentials=True)
+        flask_cors.CORS(self.app, supports_credentials=True, origins="*")
         # Add a secret key which is mandatory for using flask.session for session management.
         self.app.secret_key = "vO2hlWdvaKzL0smYUCrQtGgggzxA7paw"
         self.socketio = flask_socketio.SocketIO(self.app, cors_allowed_origins="*")
+
+        # Debug SocketIO.
+        @self.socketio.on('connect')
+        def handle_connect():
+            logging.info('SocketIO client connected')
+
+        @self.socketio.on('disconnect')
+        def handle_disconnect():
+            logging.info('SocketIO client disconnected')
 
         self._rescanner = _ConfigRescanner()
 

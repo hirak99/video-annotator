@@ -44,6 +44,7 @@ const VideoPlayer: React.FC = () => {
     const [videoFiles, setVideoFiles] = useState<VideoFileProps[]>([]);
     const [currentVideoIndex, setCurrentVideoIndex] = useState<number>(0);
     const [currentVideoUid, setCurrentVideoUid] = useState<string | null>(null);
+    const currentVideoUidRef = useRef<string | null>(null);
     const [labelTypes, setLabelTypes] = useState<LabelType[]>([]);
     const [currentTime, setCurrentTime] = useState<number>(0);
 
@@ -107,23 +108,60 @@ const VideoPlayer: React.FC = () => {
     }, [navigate]);
 
     useEffect(() => {
+        // Keep currentVideoUidRef in sync with currentVideoUid
+        currentVideoUidRef.current = currentVideoUid;
+    }, [currentVideoUid]);
+
+    useEffect(() => {
         // Socket.IO connection for real-time label updates
-        const socketUrl = BACKEND_URL?.replace(/^http/, "ws") || "";
-        const socket: Socket = io(socketUrl, { transports: ["websocket"] });
+        // Dynamically construct ws(s)://host:port/socket.io from REACT_APP_BACKEND_URL
+        let socketUrl = "";
+        if (BACKEND_URL) {
+            try {
+                const url = new URL(BACKEND_URL);
+                // Use wss for https, ws for http
+                url.protocol = url.protocol === "https:" ? "wss:" : "ws:";
+                url.pathname = "/socket.io";
+                socketUrl = url.toString();
+            } catch (e) {
+                // fallback if URL parsing fails
+                socketUrl = BACKEND_URL
+                    .replace(/^https/, "wss")
+                    .replace(/^http/, "ws")
+                    .replace(/\/api\/?$/, "/socket.io");
+            }
+        }
+        const socket: Socket = io(socketUrl, { transports: ['websocket', 'polling'] });
+
+        // Debugging - remove later.
+        console.log("Socket.IO socketUrl:", socketUrl);
+        console.log("Socket.IO connected (immediate):", socket.connected);
+
+        socket.on("connect", () => {
+            console.log("Socket.IO connected (event):", socket.connected);
+        });
+        socket.on("connect_error", (e) => console.error("connect_error", e));
+
+        socket.on("labels_updated", (data) => {
+            console.log("Received labels_updated event:", data);
+            // ...existing code...
+        });
+
         socket.on("labels_updated", (data: { video_uid: string, client_id?: string }) => {
             // Ignore if this client initiated the change
             if (data.client_id && data.client_id === clientIdRef.current) return;
-            if (data.video_uid === currentVideoUid) {
-                getBackendPromise(`/api/labels/${currentVideoUid}`).then(response => {
+            if (data.video_uid === currentVideoUidRef.current) {
+                getBackendPromise(`/api/labels/${currentVideoUidRef.current}`).then(response => {
                     setBoxes(response.data);
                     lastBackendBoxes.current = response.data;
                 });
             }
         });
         return () => {
+            console.log("Socket.IO disconnected");
             socket.disconnect();
         };
-    }, [currentVideoUid]);
+    }, []);
 
     useEffect(() => {
         if (!currentVideoUid) return;
@@ -187,7 +225,7 @@ const VideoPlayer: React.FC = () => {
                 }
             };
         }
-    }, []);
+    }, [currentVideoUid]);
 
     const handleVideoLoad = (event: React.SyntheticEvent<HTMLVideoElement>) => {
         const video = event.currentTarget;
@@ -216,7 +254,7 @@ const VideoPlayer: React.FC = () => {
 
         observer.observe(playerRef.current);
         return () => observer.disconnect();
-    }, []);
+    }, [currentVideoUid]);
 
     // Utility to set boxes and push to backend (throttled)
     const throttleTimeout = useRef<NodeJS.Timeout | null>(null);
@@ -349,7 +387,7 @@ const VideoPlayer: React.FC = () => {
         if (playerRef.current) {
             playerRef.current.playbackRate = playbackRate;
         }
-    }, [playbackRate]);
+    }, [playbackRate, currentVideoUid]);
 
     return (
         <div style={{ padding: '4px 4px' }}>

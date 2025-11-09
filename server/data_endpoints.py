@@ -77,6 +77,7 @@ def _save_labels(
     try:
         payload = {"video_uid": video_uid, "client_id": client_id}
         socketio.emit("labels_updated", payload)
+        logging.info("SocketIO emit succeeded")
     except Exception as e:
         logging.warning("SocketIO emit failed:", e)
 
