@@ -3,6 +3,7 @@ import os
 import threading
 import time
 
+import argon2
 import flask
 from flask import jsonify
 from flask import request
@@ -51,13 +52,13 @@ class MainApp:
         self.socketio = flask_socketio.SocketIO(self.app, cors_allowed_origins="*")
 
         # Debug SocketIO.
-        @self.socketio.on('connect')
+        @self.socketio.on("connect")
         def handle_connect():
-            logging.info('SocketIO client connected')
+            logging.info("SocketIO client connected")
 
-        @self.socketio.on('disconnect')
+        @self.socketio.on("disconnect")
         def handle_disconnect():
-            logging.info('SocketIO client disconnected')
+            logging.info("SocketIO client disconnected")
 
         self._rescanner = _ConfigRescanner()
 
@@ -76,10 +77,24 @@ class MainApp:
             logging.info(flask.session)
             flask.session.clear()
             for user in users:
-                if user["username"] == username and user["password"] == password:
-                    flask.session["username"] = username
-                    logging.info(flask.session)
-                    return jsonify({"status": "success"})
+                if user["username"] == username:
+                    password_verified: bool
+                    if user.get("password_is_hashed", False):
+                        try:
+                            argon2.PasswordHasher().verify(user["password"], password)
+                            password_verified = True
+                        except (
+                            argon2.exceptions.InvalidHashError,
+                            argon2.exceptions.VerifyMismatchError,
+                        ):
+                            password_verified = False
+                    else:
+                        logging.warning("Using paintext password, consider hashing.")
+                        password_verified = user["password"] == password
+                    if password_verified:
+                        flask.session["username"] = username
+                        logging.info(flask.session)
+                        return jsonify({"status": "success"})
             else:
                 return (
                     jsonify({"status": "error", "message": "Invalid credentials"}),

@@ -5,6 +5,7 @@ class User(TypedDict):
     username: str
     password: str
     workspace: NotRequired[str]
+    password_is_hashed: NotRequired[bool]
 
 
 class LabelProperties(TypedDict):

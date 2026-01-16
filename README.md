@@ -14,7 +14,7 @@ There are numerous small details implemented to make it convenient and easy for 
 Following are a few examples.
 
 ## User Management, Replication, and Collaboration
-- **Basic security** to restrict video access to users who have the correct password. However, this is not intended for high-security environments.
+- **Basic security** to restrict video access to users who have the correct password. Recommended to use [argon2](https://argon2.online/) hashes for passwords, however, plaintext is also supported for small projects though not recommended.
 - **Multiple workers** can either independently work on labeling, or collaborate, depending on the configuration.
 - **ACL** to limit visibility of videos to workers.
 - **Workspace sharing** so that multiple annotators can see each other's work and collaborate.
